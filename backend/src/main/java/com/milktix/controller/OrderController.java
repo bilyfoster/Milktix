@@ -1,0 +1,147 @@
+package com.milktix.controller;
+
+import com.milktix.dto.*;
+import com.milktix.entity.Order;
+import com.milktix.entity.Ticket;
+import com.milktix.entity.User;
+import com.milktix.repository.OrderRepository;
+import com.milktix.repository.TicketRepository;
+import com.milktix.security.UserDetailsImpl;
+import com.milktix.service.OrderService;
+import com.stripe.exception.StripeException;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/orders")
+@CrossOrigin(origins = "*", maxAge = 3600)
+public class OrderController {
+
+    @Autowired
+    private OrderService orderService;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private TicketRepository ticketRepository;
+
+    // Create order
+    @PostMapping
+    public ResponseEntity<?> createOrder(
+            @Valid @RequestBody OrderCreateRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        try {
+            Map<UUID, Integer> ticketQuantities = new HashMap<>();
+            for (var item : request.items()) {
+                ticketQuantities.put(item.ticketTypeId(), item.quantity());
+            }
+
+            Order order = orderService.createOrder(
+                    userDetails.getId(),
+                    request.eventId(),
+                    ticketQuantities,
+                    request.billingName(),
+                    request.billingEmail()
+            );
+
+            return ResponseEntity.ok(mapToOrderResponse(order));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // Create payment intent
+    @PostMapping("/{orderId}/payment-intent")
+    public ResponseEntity<?> createPaymentIntent(@PathVariable UUID orderId) {
+        try {
+            PaymentIntentResponse response = orderService.createPaymentIntent(orderId);
+            return ResponseEntity.ok(response);
+        } catch (StripeException e) {
+            return ResponseEntity.badRequest().body("Payment error: " + e.getMessage());
+        }
+    }
+
+    // Get my orders
+    @GetMapping("/my")
+    public ResponseEntity<List<OrderResponse>> getMyOrders(
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        User user = new User();
+        user.setId(userDetails.getId());
+        
+        List<Order> orders = orderRepository.findByUserOrderByCreatedAtDesc(user);
+        
+        return ResponseEntity.ok(orders.stream()
+                .map(this::mapToOrderResponse)
+                .collect(Collectors.toList()));
+    }
+
+    // Get order by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderResponse> getOrderById(@PathVariable UUID id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        
+        return ResponseEntity.ok(mapToOrderResponse(order));
+    }
+
+    // Webhook for Stripe
+    @PostMapping("/webhook")
+    public ResponseEntity<Void> handleStripeWebhook(@RequestBody String payload,
+                                                      @RequestHeader("Stripe-Signature") String sigHeader) {
+        // TODO: Verify webhook signature and process events
+        // For now, simplified version
+        return ResponseEntity.ok().build();
+    }
+
+    private OrderResponse mapToOrderResponse(Order order) {
+        return new OrderResponse(
+                order.getId(),
+                order.getOrderNumber(),
+                new EventSummary(
+                        order.getEvent().getId(),
+                        order.getEvent().getTitle(),
+                        order.getEvent().getStartDateTime().toString(),
+                        order.getEvent().getVenueName()
+                ),
+                ticketRepository.findByOrderId(order.getId()).stream()
+                        .map(this::mapToTicketResponse)
+                        .collect(Collectors.toList()),
+                order.getSubtotal(),
+                order.getTaxAmount(),
+                order.getFeeAmount(),
+                order.getTotalAmount(),
+                order.getStatus().name(),
+                order.getPaymentStatus().name(),
+                order.getBillingName(),
+                order.getBillingEmail(),
+                order.getCreatedAt().toString()
+        );
+    }
+
+    private TicketResponse mapToTicketResponse(Ticket ticket) {
+        return new TicketResponse(
+                ticket.getId(),
+                ticket.getTicketNumber(),
+                new TicketTypeSummary(
+                        ticket.getTicketType().getId(),
+                        ticket.getTicketType().getName(),
+                        ticket.getTicketType().getPrice()
+                ),
+                ticket.getAttendeeName(),
+                ticket.getAttendeeEmail(),
+                ticket.getStatus().name(),
+                ticket.getQrCodeData(),
+                ticket.getCheckedInAt() != null ? ticket.getCheckedInAt().toString() : null
+        );
+    }
+}
