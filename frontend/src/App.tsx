@@ -1,16 +1,30 @@
 import { Routes, Route } from 'react-router-dom'
 import { Layout } from './components/Layout'
+import { OrganizerLayout } from './components/OrganizerLayout'
 import { Home } from './pages/Home'
 import { Events } from './pages/Events'
 import { EventDetail } from './pages/EventDetail'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { BecomeOrganizer } from './pages/BecomeOrganizer'
+import { OrganizerRequestStatus } from './pages/OrganizerRequestStatus'
 import { AdminOrganizerRequests } from './pages/AdminOrganizerRequests'
+import { HostProfile } from './pages/HostProfile'
+import { LocationPage } from './pages/LocationPage'
+
+// Organizer Dashboard Pages
+import { OrganizerDashboard } from './pages/organizer/Dashboard'
+import { CreateEvent } from './pages/organizer/CreateEvent'
+import { MyEvents as ManageEvents } from './pages/organizer/MyEvents'
+import { Orders } from './pages/organizer/Orders'
+import { OrderDetail } from './pages/organizer/OrderDetail'
+import { Hosts } from './pages/organizer/Hosts'
+import { Locations } from './pages/organizer/Locations'
 
 function App() {
   return (
     <Routes>
+      {/* Public Layout Routes */}
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="events" element={<Events />} />
@@ -18,7 +32,21 @@ function App() {
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="become-organizer" element={<BecomeOrganizer />} />
+        <Route path="organizer-request-status" element={<OrganizerRequestStatus />} />
         <Route path="admin/organizer-requests" element={<AdminOrganizerRequests />} />
+        <Route path="hosts/:id" element={<HostProfile />} />
+        <Route path="locations/:id" element={<LocationPage />} />
+      </Route>
+
+      {/* Organizer Dashboard Routes - Nested Layout */}
+      <Route path="/organizer" element={<OrganizerLayout />}>
+        <Route path="dashboard" element={<OrganizerDashboard />} />
+        <Route path="create-event" element={<CreateEvent />} />
+        <Route path="manage-events" element={<ManageEvents />} />
+        <Route path="orders" element={<Orders />} />
+        <Route path="orders/:orderId" element={<OrderDetail />} />
+        <Route path="hosts" element={<Hosts />} />
+        <Route path="locations" element={<Locations />} />
       </Route>
     </Routes>
   )
