@@ -19,5 +19,7 @@ public record EventCreateRequest(
     String venueZip,
     Set<UUID> categoryIds,
     String imageUrl,
-    List<TicketTypeRequest> ticketTypes
+    List<TicketTypeRequest> ticketTypes,
+    UUID hostId,
+    UUID locationId
 ) {}

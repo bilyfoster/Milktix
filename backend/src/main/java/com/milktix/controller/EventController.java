@@ -33,6 +33,12 @@ public class EventController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private HostRepository hostRepository;
+
+    @Autowired
+    private LocationRepository locationRepository;
+
     // Get all published upcoming events
     @GetMapping
     public ResponseEntity<List<EventResponse>> getAllEvents() {
@@ -78,6 +84,18 @@ public class EventController {
         event.setOrganizer(organizer);
         event.setStatus(Event.Status.PUBLISHED);
 
+        // Set host if provided
+        if (request.hostId() != null) {
+            hostRepository.findById(request.hostId())
+                    .ifPresent(event::setHost);
+        }
+
+        // Set location if provided
+        if (request.locationId() != null) {
+            locationRepository.findById(request.locationId())
+                    .ifPresent(event::setLocation);
+        }
+
         // Add categories
         if (request.categoryIds() != null) {
             for (UUID categoryId : request.categoryIds()) {
@@ -110,6 +128,37 @@ public class EventController {
 
     // Helper method to map Event to EventResponse
     private EventResponse mapToEventResponse(Event event) {
+        UserSummary organizerSummary = event.getOrganizer() != null ? 
+                new UserSummary(event.getOrganizer().getId(), event.getOrganizer().getFullName()) : null;
+        
+        HostDTO hostDTO = event.getHost() != null ?
+                new HostDTO(
+                        event.getHost().getId(),
+                        event.getHost().getName(),
+                        event.getHost().getBio(),
+                        event.getHost().getImageUrl(),
+                        event.getHost().getWebsite(),
+                        event.getHost().getEmail(),
+                        event.getHost().getPhone()
+                ) : null;
+        
+        LocationDTO locationDTO = event.getLocation() != null ?
+                new LocationDTO(
+                        event.getLocation().getId(),
+                        event.getLocation().getName(),
+                        event.getLocation().getDescription(),
+                        event.getLocation().getAddress(),
+                        event.getLocation().getCity(),
+                        event.getLocation().getState(),
+                        event.getLocation().getZipCode(),
+                        event.getLocation().getCountry(),
+                        event.getLocation().getLatitude(),
+                        event.getLocation().getLongitude(),
+                        event.getLocation().getImageUrl(),
+                        event.getLocation().getWebsite(),
+                        event.getLocation().getPhone()
+                ) : null;
+        
         return new EventResponse(
                 event.getId(),
                 event.getTitle(),
@@ -124,8 +173,9 @@ public class EventController {
                 event.getStatus().name(),
                 event.getEventType().name(),
                 event.getImageUrl(),
-                event.getOrganizer() != null ? 
-                        new UserSummary(event.getOrganizer().getId(), event.getOrganizer().getFullName()) : null,
+                organizerSummary,
+                hostDTO,
+                locationDTO,
                 event.getTicketTypes().stream()
                         .map(this::mapToTicketTypeResponse)
                         .collect(Collectors.toList()),

@@ -20,6 +20,8 @@ public record EventResponse(
     String eventType,
     String imageUrl,
     UserSummary organizer,
+    HostDTO host,
+    LocationDTO location,
     List<TicketTypeResponse> ticketTypes,
     List<CategoryResponse> categories,
     boolean isUpcoming,

@@ -57,6 +57,14 @@ public class Event {
     @JoinColumn(name = "organizer_id")
     private User organizer;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "host_id")
+    private Host host;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_id")
+    private Location location;
+
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<TicketType> ticketTypes = new HashSet<>();
 
@@ -141,6 +149,12 @@ public class Event {
 
     public User getOrganizer() { return organizer; }
     public void setOrganizer(User organizer) { this.organizer = organizer; }
+
+    public Host getHost() { return host; }
+    public void setHost(Host host) { this.host = host; }
+
+    public Location getLocation() { return location; }
+    public void setLocation(Location location) { this.location = location; }
 
     public Set<TicketType> getTicketTypes() { return ticketTypes; }
     public void setTicketTypes(Set<TicketType> ticketTypes) { this.ticketTypes = ticketTypes; }
