@@ -12,7 +12,7 @@ import {
   Save
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { eventsApi } from '../utils/api'
+import { eventsApi, ticketTypesApi } from '../utils/api'
 import type { Event, TicketType } from '../types'
 
 interface TicketTypeForm {
@@ -54,8 +54,8 @@ export function ManageTickets() {
   })
 
   const updateTicketMutation = useMutation({
-    mutationFn: async (_payload: { ticketId: string; data: unknown }) => {
-      return eventsApi.getById(id!)
+    mutationFn: async (payload: { ticketId: string; data: unknown }) => {
+      return ticketTypesApi.update(id!, payload.ticketId, payload.data)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event', id] })
@@ -64,8 +64,8 @@ export function ManageTickets() {
   })
 
   const createTicketMutation = useMutation({
-    mutationFn: async (_payload: unknown) => {
-      return eventsApi.getById(id!)
+    mutationFn: async (payload: unknown) => {
+      return ticketTypesApi.create(id!, payload)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event', id] })
@@ -75,8 +75,8 @@ export function ManageTickets() {
   })
 
   const deleteTicketMutation = useMutation({
-    mutationFn: async (_ticketId: string) => {
-      return eventsApi.getById(id!)
+    mutationFn: async (ticketId: string) => {
+      return ticketTypesApi.delete(id!, ticketId)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event', id] })
