@@ -90,6 +90,9 @@ export function Layout() {
           <p className="text-center text-gray-500 text-sm">
             © 2026 MilkTix. All rights reserved.
           </p>
+          <p className="text-center text-gray-400 text-xs mt-2">
+            v1.0.0-beta
+          </p>
         </div>
       </footer>
     </div>
