@@ -14,18 +14,6 @@ interface Attendee {
   checkInTime?: string
 }
 
-interface TicketData {
-  id: string
-  ticketNumber: string
-  ticketType: {
-    name: string
-  }
-  attendeeName: string
-  attendeeEmail: string
-  status: string
-  checkedInAt?: string
-}
-
 export function CheckIn() {
   const { user } = useAuthStore()
   const [events, setEvents] = useState<Event[]>([])

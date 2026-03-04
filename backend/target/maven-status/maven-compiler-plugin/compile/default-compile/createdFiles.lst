@@ -27,6 +27,7 @@ com/milktix/dto/PaymentIntentResponse.class
 com/milktix/dto/AuthResponse.class
 com/milktix/dto/OrderCreateRequest.class
 com/milktix/repository/CategoryRepository.class
+com/milktix/controller/CheckInController.class
 com/milktix/security/AuthTokenFilter.class
 com/milktix/dto/TicketResponse.class
 com/milktix/entity/Category.class
@@ -44,6 +45,7 @@ com/milktix/entity/TicketType.class
 com/milktix/entity/User$Role.class
 com/milktix/entity/User.class
 com/milktix/entity/Ticket$Status.class
+com/milktix/controller/UserController.class
 com/milktix/entity/Order$PaymentStatus.class
 com/milktix/controller/AuthController.class
 com/milktix/repository/TicketTypeRepository.class

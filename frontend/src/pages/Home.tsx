@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Calendar, Ticket, Shield, Zap, Users, Star } from 'lucide-react'
+import { Calendar, Ticket, Shield, Zap } from 'lucide-react'
 
 export function Home() {
   return (

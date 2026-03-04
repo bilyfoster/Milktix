@@ -4,6 +4,7 @@
 /root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/repository/TicketRepository.java
 /root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/service/OrderService.java
 /root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/repository/CategoryRepository.java
+/root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/controller/UserController.java
 /root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/security/AuthTokenFilter.java
 /root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/repository/TicketTypeRepository.java
 /root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/dto/LoginRequest.java
@@ -34,6 +35,7 @@
 /root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/entity/Ticket.java
 /root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/MilkTixApplication.java
 /root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/controller/OrderController.java
+/root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/controller/CheckInController.java
 /root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/config/SecurityConfig.java
 /root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/controller/EventController.java
 /root/.openclaw/workspace/projects/milktix/backend/src/main/java/com/milktix/dto/OrderCreateRequest.java

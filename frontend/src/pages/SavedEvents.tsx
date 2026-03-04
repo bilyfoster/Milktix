@@ -10,7 +10,7 @@ export function SavedEvents() {
   const { user } = useAuthStore()
   const [savedEvents, setSavedEvents] = useState<Event[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [, setError] = useState('')
 
   useEffect(() => {
     fetchSavedEvents()
@@ -21,7 +21,7 @@ export function SavedEvents() {
       setIsLoading(true)
       const response = await usersApi.getSavedEvents()
       setSavedEvents(response.data as Event[])
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to load saved events')
     } finally {
       setIsLoading(false)
