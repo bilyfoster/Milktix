@@ -21,7 +21,7 @@ export function Home() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-8 animate-fade-in">
               <Sparkles className="h-4 w-4 text-yellow-300" />
-              <span className="text-sm font-medium text-white">Trusted by 10,000+ event organizers</span>
+              <span className="text-sm font-medium text-white">Your Community's Ticketing Platform</span>
             </div>
             
             {/* Headline */}
@@ -59,11 +59,11 @@ export function Home() {
               </div>
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                <span>2M+ Tickets Sold</span>
+                <span>Community Owned</span>
               </div>
               <div className="flex items-center gap-2">
                 <Star className="h-4 w-4 text-yellow-300" />
-                <span>4.9/5 Rating</span>
+                <span>Built for You</span>
               </div>
             </div>
           </div>

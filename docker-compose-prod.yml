@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: milktix-db
+    environment:
+      POSTGRES_DB: milktix
+      POSTGRES_USER: milktix
+      POSTGRES_PASSWORD: milktix123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U milktix"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - milktix
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: milktix-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/milktix
+      SPRING_DATASOURCE_USERNAME: milktix
+      SPRING_DATASOURCE_PASSWORD: milktix123
+      JWT_SECRET: ${JWT_SECRET:-your-256-bit-secret-key-for-development-only}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/data:/app/data
+    networks:
+      - milktix
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.milktix-api.rule=Host(`api.milktix.com`)"
+      - "traefik.http.routers.milktix-api.entrypoints=websecure"
+      - "traefik.http.routers.milktix-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.milktix-api.loadbalancer.server.port=8080"
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: milktix-frontend
+    depends_on:
+      - backend
+    networks:
+      - milktix
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.milktix-http.rule=Host(`milktix.com`) || Host(`www.milktix.com`)"
+      - "traefik.http.routers.milktix-http.entrypoints=web"
+      - "traefik.http.routers.milktix-http.middlewares=redirect-to-https"
+      - "traefik.http.routers.milktix-https.rule=Host(`milktix.com`) || Host(`www.milktix.com`)"
+      - "traefik.http.routers.milktix-https.entrypoints=websecure"
+      - "traefik.http.routers.milktix-https.tls.certresolver=letsencrypt"
+      - "traefik.http.services.milktix.loadbalancer.server.port=80"
+
+volumes:
+  postgres_data:
+
+networks:
+  milktix:
+  traefik:
+    external: true

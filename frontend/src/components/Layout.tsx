@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Calendar, User, Menu, X, Ticket, Plus, LogOut, Building2, Shield } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '../stores/authStore'
+import { getVersionString } from '../version'
 
 export function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -293,9 +294,14 @@ export function Layout() {
           </div>
           
           <div className="pt-8 border-t border-warmgray-800 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-warmgray-500 text-sm">
-              © 2026 MilkTix. All rights reserved.
-            </p>
+            <div className="flex flex-col md:flex-row items-center gap-2">
+              <p className="text-warmgray-500 text-sm">
+                © 2026 MilkTix. All rights reserved.
+              </p>
+              <span className="text-warmgray-600 text-xs bg-warmgray-800 px-2 py-1 rounded">
+                {getVersionString()}
+              </span>
+            </div>
             <div className="flex items-center gap-6">
               <a href="#" className="text-warmgray-500 hover:text-white transition-colors">
                 <span className="sr-only">Twitter</span>
