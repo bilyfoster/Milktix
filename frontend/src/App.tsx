@@ -11,6 +11,7 @@ import { OrganizerRequestStatus } from './pages/OrganizerRequestStatus'
 import { AdminOrganizerRequests } from './pages/AdminOrganizerRequests'
 import { HostProfile } from './pages/HostProfile'
 import { LocationPage } from './pages/LocationPage'
+import { OrderSuccess } from './pages/OrderSuccess'
 
 // Organizer Dashboard Pages
 import { OrganizerDashboard } from './pages/organizer/Dashboard'
@@ -36,6 +37,7 @@ function App() {
         <Route path="admin/organizer-requests" element={<AdminOrganizerRequests />} />
         <Route path="hosts/:id" element={<HostProfile />} />
         <Route path="locations/:id" element={<LocationPage />} />
+        <Route path="order-success" element={<OrderSuccess />} />
       </Route>
 
       {/* Organizer Dashboard Routes - Nested Layout */}

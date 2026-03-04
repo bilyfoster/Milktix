@@ -9,8 +9,12 @@ import com.milktix.repository.TicketRepository;
 import com.milktix.security.UserDetailsImpl;
 import com.milktix.service.OrderService;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Event;
+import com.stripe.model.PaymentIntent;
+import com.stripe.net.Webhook;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,6 +27,9 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/orders")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class OrderController {
+
+    @Value("${stripe.webhook.secret}")
+    private String webhookSecret;
 
     @Autowired
     private OrderService orderService;
@@ -98,9 +105,43 @@ public class OrderController {
     @PostMapping("/webhook")
     public ResponseEntity<Void> handleStripeWebhook(@RequestBody String payload,
                                                       @RequestHeader("Stripe-Signature") String sigHeader) {
-        // TODO: Verify webhook signature and process events
-        // For now, simplified version
-        return ResponseEntity.ok().build();
+        try {
+            // Verify webhook signature
+            Event event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
+            
+            // Handle the event
+            switch (event.getType()) {
+                case "payment_intent.succeeded":
+                    PaymentIntent paymentIntent = (PaymentIntent) event.getDataObjectDeserializer().getObject().orElse(null);
+                    if (paymentIntent != null) {
+                        orderService.confirmPayment(paymentIntent.getId());
+                    }
+                    break;
+                    
+                case "payment_intent.payment_failed":
+                    // Handle failed payment - could update order status
+                    break;
+                    
+                default:
+                    // Unexpected event type
+                    break;
+            }
+            
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            // Invalid signature or other error
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // Get all orders (admin/organizer)
+    @GetMapping
+    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponse>> getAllOrders() {
+        List<Order> orders = orderRepository.findAll();
+        return ResponseEntity.ok(orders.stream()
+                .map(this::mapToOrderResponse)
+                .collect(Collectors.toList()));
     }
 
     private OrderResponse mapToOrderResponse(Order order) {

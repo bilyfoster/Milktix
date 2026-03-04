@@ -2,6 +2,12 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
+# Build arguments for environment variables
+ARG VITE_STRIPE_PUBLIC_KEY
+
+# Set environment variable for build
+ENV VITE_STRIPE_PUBLIC_KEY=$VITE_STRIPE_PUBLIC_KEY
+
 # Copy package files
 COPY package*.json ./
 

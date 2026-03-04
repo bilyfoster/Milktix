@@ -43,6 +43,7 @@ export const categoriesApi = {
 export const ordersApi = {
   create: (data: any) => api.post('/orders', data),
   getMyOrders: () => api.get('/orders/my'),
+  getById: (id: string) => api.get(`/orders/${id}`),
   createPaymentIntent: (orderId: string) => api.post(`/orders/${orderId}/payment-intent`),
 };
 
