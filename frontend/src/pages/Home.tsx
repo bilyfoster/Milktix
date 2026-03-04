@@ -4,16 +4,11 @@ import { Calendar, Ticket, Shield, Zap, Users, Star } from 'lucide-react'
 export function Home() {
   return (
     <div className="min-h-screen">
-      {/* Hero Section - Mobile Optimized */}
+      {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white overflow-hidden">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
-              <Star className="h-4 w-4 text-yellow-300" />
-              <span className="text-sm font-medium">Trusted by 10,000+ event organizers</span>
-            </div>
-            
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
               Sell Tickets.<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-pink-300">
@@ -22,8 +17,7 @@ export function Home() {
             </h1>
             
             <p className="text-lg sm:text-xl text-white/90 max-w-2xl mx-auto mb-8 px-4">
-              The all-in-one ticketing platform for creators, venues, and event professionals. 
-              Create events in minutes, sell tickets instantly.
+              Create events, sell tickets, and manage your attendees all in one place.
             </p>
             
             <div className="flex flex-col sm:flex-row justify-center gap-3 px-4">
@@ -41,22 +35,6 @@ export function Home() {
                 <Zap className="h-5 w-5 mr-2" />
                 Create Event
               </Link>
-            </div>
-            
-            {/* Trust Badges */}
-            <div className="mt-12 flex flex-wrap justify-center items-center gap-6 text-white/70 text-sm">
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                <span>PCI Compliant</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span>2M+ Tickets Sold</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4" />
-                <span>4.9/5 Rating</span>
-              </div>
             </div>
           </div>
         </div>
@@ -77,15 +55,15 @@ export function Home() {
               For Event Attendees
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Discover amazing events, buy tickets in seconds, and enjoy seamless entry with digital tickets.
+              Discover events, buy tickets, and enjoy seamless entry with digital tickets.
             </p>
           </div>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { icon: Calendar, title: 'Discover Events', desc: 'Find events near you or browse by category' },
-              { icon: Ticket, title: 'Instant Tickets', desc: 'Buy tickets in seconds with Apple Pay & Google Pay' },
-              { icon: Shield, title: 'Secure Payments', desc: 'Your data is protected with bank-level security' },
+              { icon: Ticket, title: 'Instant Tickets', desc: 'Buy tickets in seconds with secure checkout' },
+              { icon: Shield, title: 'Secure Payments', desc: 'Your data is protected with encryption' },
               { icon: Zap, title: 'Fast Entry', desc: 'Show your digital ticket and walk right in' },
             ].map((feature, i) => (
               <div key={i} className="bg-gray-50 rounded-2xl p-6 hover:shadow-lg transition-shadow">
@@ -106,20 +84,19 @@ export function Home() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">
-                For Event Organizers & Talent
+                For Event Organizers
               </h2>
               <p className="text-gray-400 text-lg mb-8">
-                Everything you need to create, promote, and manage successful events. 
-                From ticket sales to attendee check-in.
+                Everything you need to create, promote, and manage successful events.
               </p>
               
               <div className="space-y-4">
                 {[
-                  'Create events in minutes with our drag-and-drop builder',
-                  'Set up multiple ticket types and pricing tiers',
-                  'Track sales in real-time with detailed analytics',
-                  'Check in attendees with our mobile app',
-                  'Get paid directly to your bank account',
+                  'Create events in minutes',
+                  'Set up multiple ticket types',
+                  'Track sales in real-time',
+                  'Check in attendees with QR codes',
+                  'Get paid directly to your account',
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -144,22 +121,19 @@ export function Home() {
             </div>
             
             <div className="bg-gray-800 rounded-2xl p-6 md:p-8">
-              <div className="bg-gray-700 rounded-xl p-6 mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm text-gray-400">Total Revenue</span>
-                  <span className="text-green-400 text-sm">+24% this month</span>
-                </div>
-                <div className="text-3xl font-bold">$24,580</div>
+              <div className="bg-gray-700 rounded-xl p-6 mb-6 text-center">
+                <span className="text-sm text-gray-400">Your Dashboard</span>
+                <div className="text-3xl font-bold mt-2">Manage Events</div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-700 rounded-xl p-4">
-                  <div className="text-sm text-gray-400 mb-1">Tickets Sold</div>
-                  <div className="text-xl font-bold">1,247</div>
+                <div className="bg-gray-700 rounded-xl p-4 text-center">
+                  <div className="text-sm text-gray-400 mb-1">Create</div>
+                  <div className="text-xl font-bold">New Event</div>
                 </div>
-                <div className="bg-gray-700 rounded-xl p-4">
-                  <div className="text-sm text-gray-400 mb-1">Events</div>
-                  <div className="text-xl font-bold">12</div>
+                <div className="bg-gray-700 rounded-xl p-4 text-center">
+                  <div className="text-sm text-gray-400 mb-1">View</div>
+                  <div className="text-xl font-bold">Sales</div>
                 </div>
               </div>
             </div>
@@ -171,17 +145,17 @@ export function Home() {
       <section className="py-16 md:py-24 bg-gradient-to-r from-indigo-600 to-purple-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to transform your events?
+            Ready to get started?
           </h2>
           <p className="text-indigo-100 text-lg mb-8 max-w-2xl mx-auto">
-            Join thousands of organizers who use MilkTix to sell tickets and grow their audience.
+            Create an account and start selling tickets today.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link
               to="/register"
               className="inline-flex items-center justify-center px-8 py-4 bg-white text-indigo-600 font-semibold rounded-xl hover:bg-gray-100 transition-colors"
             >
-              Get Started Free
+              Get Started
             </Link>
             <Link
               to="/events"
