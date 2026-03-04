@@ -20,7 +20,7 @@ export function OrganizerDashboard() {
   const { data: events, isLoading, error } = useQuery({
     queryKey: ['myEvents'],
     queryFn: async () => {
-      const response = await eventsApi.getAll()
+      const response = await eventsApi.getMyEvents()
       return response.data as Event[]
     },
   })
