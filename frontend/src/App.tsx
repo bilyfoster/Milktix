@@ -8,6 +8,9 @@ import { Register } from './pages/Register'
 import { OrganizerDashboard } from './pages/OrganizerDashboard'
 import { CreateEvent } from './pages/CreateEvent'
 import { ManageTickets } from './pages/ManageTickets'
+import { SavedEvents } from './pages/SavedEvents'
+import { OrderHistory } from './pages/OrderHistory'
+import { CheckIn } from './pages/CheckIn'
 
 function App() {
   return (
@@ -18,9 +21,12 @@ function App() {
         <Route path="events/:id" element={<EventDetail />} />
         <Route path="events/:id/tickets" element={<ManageTickets />} />
         <Route path="events/create" element={<CreateEvent />} />
+        <Route path="events/saved" element={<SavedEvents />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="dashboard" element={<OrganizerDashboard />} />
+        <Route path="orders" element={<OrderHistory />} />
+        <Route path="checkin" element={<CheckIn />} />
       </Route>
     </Routes>
   )
