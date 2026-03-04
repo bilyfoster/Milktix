@@ -1,6 +1,12 @@
 import axios from 'axios';
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080/api';
+// Use production API URL if not in local development
+const isLocalhost = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+const API_URL = isLocalhost 
+  ? 'http://localhost:8080/api'
+  : 'https://api.milktix.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
