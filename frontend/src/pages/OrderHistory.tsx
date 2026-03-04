@@ -2,20 +2,38 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Ticket, Calendar, CheckCircle, Download, Clock } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import { usersApi } from '../utils/api'
 import { format } from 'date-fns'
 
 interface Order {
   id: string
-  eventTitle: string
-  eventDate: string
-  venueName: string
-  venueCity: string
-  ticketType: string
-  quantity: number
-  totalPrice: number
-  orderDate: string
-  status: 'confirmed' | 'pending' | 'cancelled'
-  qrCode?: string
+  orderNumber: string
+  event: {
+    id: string
+    title: string
+    startDateTime: string
+    venueName: string
+  }
+  tickets: Array<{
+    id: string
+    ticketNumber: string
+    ticketType: {
+      name: string
+      price: number
+    }
+    attendeeName: string
+    attendeeEmail: string
+    status: string
+  }>
+  subtotal: number
+  taxAmount: number
+  feeAmount: number
+  totalAmount: number
+  status: string
+  paymentStatus: string
+  billingName: string
+  billingEmail: string
+  createdAt: string
 }
 
 export function OrderHistory() {
@@ -31,34 +49,8 @@ export function OrderHistory() {
   const fetchOrders = async () => {
     try {
       setIsLoading(true)
-      // TODO: Replace with actual orders API
-      // Mock data for now
-      setOrders([
-        {
-          id: 'ord-001',
-          eventTitle: 'Summer Music Festival',
-          eventDate: '2026-06-15T19:00:00',
-          venueName: 'Central Park',
-          venueCity: 'Phoenix, AZ',
-          ticketType: 'General Admission',
-          quantity: 2,
-          totalPrice: 120.00,
-          orderDate: '2026-03-01T10:30:00',
-          status: 'confirmed'
-        },
-        {
-          id: 'ord-002',
-          eventTitle: 'Tech Conference 2026',
-          eventDate: '2026-04-20T09:00:00',
-          venueName: 'Convention Center',
-          venueCity: 'Scottsdale, AZ',
-          ticketType: 'VIP Pass',
-          quantity: 1,
-          totalPrice: 299.00,
-          orderDate: '2026-02-15T14:20:00',
-          status: 'confirmed'
-        }
-      ])
+      const response = await usersApi.getOrders()
+      setOrders(response.data as Order[])
     } catch (err) {
       console.error('Failed to load orders:', err)
     } finally {
@@ -68,9 +60,10 @@ export function OrderHistory() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'confirmed':
+      case 'CONFIRMED':
+      case 'COMPLETED':
         return <CheckCircle className="h-5 w-5 text-green-500" />
-      case 'pending':
+      case 'PENDING':
         return <Clock className="h-5 w-5 text-yellow-500" />
       default:
         return <Ticket className="h-5 w-5 text-gray-400" />
@@ -79,11 +72,12 @@ export function OrderHistory() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'confirmed':
+      case 'CONFIRMED':
+      case 'COMPLETED':
         return 'Confirmed'
-      case 'pending':
+      case 'PENDING':
         return 'Pending'
-      case 'cancelled':
+      case 'CANCELLED':
         return 'Cancelled'
       default:
         return status
@@ -172,28 +166,28 @@ export function OrderHistory() {
                       <div className="flex items-center gap-3 mb-2">
                         {getStatusIcon(order.status)}
                         <span className={`text-sm font-medium ${
-                          order.status === 'confirmed' ? 'text-green-600' :
-                          order.status === 'pending' ? 'text-yellow-600' :
+                          order.status === 'CONFIRMED' || order.status === 'COMPLETED' ? 'text-green-600' :
+                          order.status === 'PENDING' ? 'text-yellow-600' :
                           'text-gray-600'
                         }`}>
                           {getStatusText(order.status)}
                         </span>
                         <span className="text-gray-300">|</span>
                         <span className="text-sm text-gray-500">
-                          Order #{order.id}
+                          Order #{order.orderNumber}
                         </span>
                       </div>
                       
-                      <h3 className="text-lg font-bold text-gray-900 mb-2">{order.eventTitle}</h3>
+                      <h3 className="text-lg font-bold text-gray-900 mb-2">{order.event.title}</h3>
                       
                       <div className="space-y-1 text-sm text-gray-600">
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                          {format(new Date(order.eventDate), 'EEEE, MMMM d, yyyy • h:mm a')}
+                          {format(new Date(order.event.startDateTime), 'EEEE, MMMM d, yyyy • h:mm a')}
                         </div>
-                        <div>{order.venueName}, {order.venueCity}</div>
+                        <div>{order.event.venueName}</div>
                         <div className="text-gray-900 font-medium">
-                          {order.quantity} × {order.ticketType}
+                          {order.tickets.length} × {order.tickets[0]?.ticketType.name || 'Ticket'}
                         </div>
                       </div>
                     </div>
@@ -202,10 +196,10 @@ export function OrderHistory() {
                     <div className="flex flex-row sm:flex-col items-center sm:items-end gap-4">
                       <div className="text-right">
                         <div className="text-2xl font-bold text-gray-900">
-                          ${order.totalPrice.toFixed(2)}
+                          ${order.totalAmount.toFixed(2)}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {format(new Date(order.orderDate), 'MMM d, yyyy')}
+                          {format(new Date(order.createdAt), 'MMM d, yyyy')}
                         </div>
                       </div>
                       
@@ -233,9 +227,9 @@ export function OrderHistory() {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">{selectedOrder.eventTitle}</h2>
+              <h2 className="text-xl font-bold text-gray-900">{selectedOrder.event.title}</h2>
               <p className="text-gray-600 mt-1">
-                {format(new Date(selectedOrder.eventDate), 'EEEE, MMM d, yyyy')}
+                {format(new Date(selectedOrder.event.startDateTime), 'EEEE, MMM d, yyyy')}
               </p>
             </div>
 
@@ -255,15 +249,15 @@ export function OrderHistory() {
             <div className="space-y-2 text-sm mb-6">
               <div className="flex justify-between">
                 <span className="text-gray-600">Ticket Type</span>
-                <span className="font-medium">{selectedOrder.ticketType}</span>
+                <span className="font-medium">{selectedOrder.tickets[0]?.ticketType.name || 'Standard'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Quantity</span>
-                <span className="font-medium">{selectedOrder.quantity}</span>
+                <span className="font-medium">{selectedOrder.tickets.length}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Order ID</span>
-                <span className="font-medium">{selectedOrder.id}</span>
+                <span className="font-medium">{selectedOrder.orderNumber}</span>
               </div>
             </div>
 
