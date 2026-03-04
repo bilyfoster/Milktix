@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Calendar, User, Menu, X, Ticket, Plus, LogOut } from 'lucide-react'
+import { Calendar, User, Menu, X, Ticket, Plus, LogOut, Building2, Shield } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '../stores/authStore'
 
@@ -60,6 +60,39 @@ export function Layout() {
             <div className="hidden md:flex items-center gap-3">
               {isAuthenticated ? (
                 <>
+                  {/* Become Organizer link for attendees */}
+                  {user?.role === 'ATTENDEE' && (
+                    <Link 
+                      to="/become-organizer" 
+                      className="btn-ghost text-sm"
+                    >
+                      <Building2 className="h-4 w-4 mr-1.5" />
+                      Become Organizer
+                    </Link>
+                  )}
+                  
+                  {/* Admin link */}
+                  {user?.role === 'ADMIN' && (
+                    <Link 
+                      to="/admin/organizer-requests" 
+                      className="btn-ghost text-sm"
+                    >
+                      <Shield className="h-4 w-4 mr-1.5" />
+                      Admin
+                    </Link>
+                  )}
+                  
+                  {/* Organizer Dashboard link */}
+                  {user?.role === 'ORGANIZER' && (
+                    <Link 
+                      to="/organizer/dashboard" 
+                      className="btn-primary text-sm py-2.5"
+                    >
+                      <Plus className="h-4 w-4 mr-1.5" />
+                      Create Event
+                    </Link>
+                  )}
+                  
                   <span className="text-sm text-warmgray-600">
                     Hello, {user?.fullName || user?.username}
                   </span>
@@ -81,7 +114,7 @@ export function Layout() {
                     Sign In
                   </Link>
                   <Link 
-                    to="/register" 
+                    to="/become-organizer" 
                     className="btn-primary text-sm py-2.5"
                   >
                     <Plus className="h-4 w-4 mr-1.5" />
@@ -136,6 +169,43 @@ export function Layout() {
                   <div className="px-4 py-2 text-sm text-warmgray-600">
                     Hello, {user?.fullName || user?.username}
                   </div>
+                  
+                  {/* Become Organizer for attendees */}
+                  {user?.role === 'ATTENDEE' && (
+                    <Link
+                      to="/become-organizer"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-warmgray-700 hover:bg-warmgray-100"
+                    >
+                      <Building2 className="h-5 w-5" />
+                      Become Organizer
+                    </Link>
+                  )}
+                  
+                  {/* Admin link */}
+                  {user?.role === 'ADMIN' && (
+                    <Link
+                      to="/admin/organizer-requests"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-warmgray-700 hover:bg-warmgray-100"
+                    >
+                      <Shield className="h-5 w-5" />
+                      Admin
+                    </Link>
+                  )}
+                  
+                  {/* Organizer Dashboard */}
+                  {user?.role === 'ORGANIZER' && (
+                    <Link
+                      to="/organizer/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-coral-600 bg-coral-50 mt-2"
+                    >
+                      <Plus className="h-5 w-5" />
+                      Create Event
+                    </Link>
+                  )}
+                  
                   <button
                     onClick={() => {
                       handleLogout()
@@ -158,7 +228,7 @@ export function Layout() {
                     Sign In
                   </Link>
                   <Link
-                    to="/register"
+                    to="/become-organizer"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-coral-600 bg-coral-50 mt-2"
                   >

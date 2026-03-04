@@ -52,4 +52,25 @@ export const ticketsApi = {
   checkIn: (ticketNumber: string) => api.post(`/tickets/${ticketNumber}/checkin`),
 };
 
+// Organizer Request API
+export const organizerRequestApi = {
+  create: (data: {
+    businessName: string;
+    businessDescription?: string;
+    taxId?: string;
+    website?: string;
+    phoneNumber?: string;
+    businessEmail: string;
+  }) => api.post('/organizer-requests', data),
+  
+  getMyRequest: () => api.get('/organizer-requests/my'),
+  
+  // Admin only
+  getAll: () => api.get('/organizer-requests'),
+  getByStatus: (status: 'PENDING' | 'APPROVED' | 'REJECTED') => api.get(`/organizer-requests/status/${status}`),
+  review: (id: string, action: 'APPROVED' | 'REJECTED', adminNotes?: string) => 
+    api.post(`/organizer-requests/${id}/review`, { action, adminNotes }),
+  getPendingCount: () => api.get('/organizer-requests/pending-count'),
+};
+
 export default api;
