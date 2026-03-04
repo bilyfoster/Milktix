@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Heart, Calendar, MapPin, Trash2, Ticket } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
-import { eventsApi } from '../utils/api'
+import { usersApi } from '../utils/api'
 import type { Event } from '../types'
 import { format } from 'date-fns'
 
@@ -19,11 +19,8 @@ export function SavedEvents() {
   const fetchSavedEvents = async () => {
     try {
       setIsLoading(true)
-      // TODO: Replace with actual saved events API endpoint
-      // For now, fetch all events and filter (mock implementation)
-      const response = await eventsApi.getAll()
-      // Mock: Show first 3 events as "saved"
-      setSavedEvents(response.data.slice(0, 3) as Event[])
+      const response = await usersApi.getSavedEvents()
+      setSavedEvents(response.data as Event[])
     } catch (err) {
       setError('Failed to load saved events')
     } finally {
@@ -31,8 +28,13 @@ export function SavedEvents() {
     }
   }
 
-  const removeSavedEvent = (eventId: string) => {
-    setSavedEvents(savedEvents.filter(e => e.id !== eventId))
+  const removeSavedEvent = async (eventId: string) => {
+    try {
+      await usersApi.removeSavedEvent(eventId)
+      setSavedEvents(savedEvents.filter(e => e.id !== eventId))
+    } catch (err) {
+      console.error('Failed to remove saved event:', err)
+    }
   }
 
   if (!user) {
