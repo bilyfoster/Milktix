@@ -45,6 +45,22 @@ public class EventController {
                 .collect(Collectors.toList()));
     }
 
+    // Get events created by the current organizer
+    @GetMapping("/my-events")
+    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    public ResponseEntity<List<EventResponse>> getMyEvents(
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        User organizer = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        List<Event> events = eventRepository.findByOrganizerOrderByStartDateTimeDesc(organizer);
+        
+        return ResponseEntity.ok(events.stream()
+                .map(this::mapToEventResponse)
+                .collect(Collectors.toList()));
+    }
+
     // Get event by ID
     @GetMapping("/{id}")
     public ResponseEntity<EventResponse> getEventById(@PathVariable UUID id) {
@@ -106,6 +122,99 @@ public class EventController {
         }
 
         return ResponseEntity.ok(mapToEventResponse(savedEvent));
+    }
+
+    // Create a new ticket type for an event
+    @PostMapping("/{id}/ticket-types")
+    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    public ResponseEntity<?> createTicketType(
+            @PathVariable UUID id,
+            @Valid @RequestBody TicketTypeRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        
+        // Verify the current user is the organizer
+        if (!event.getOrganizer().getId().equals(userDetails.getId()) && 
+            !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return ResponseEntity.status(403).body("Not authorized to modify this event");
+        }
+        
+        TicketType ticketType = new TicketType();
+        ticketType.setName(request.name());
+        ticketType.setDescription(request.description());
+        ticketType.setPrice(request.price());
+        ticketType.setQuantityAvailable(request.quantityAvailable());
+        ticketType.setMinPerOrder(request.minPerOrder() != null ? request.minPerOrder() : 1);
+        ticketType.setMaxPerOrder(request.maxPerOrder() != null ? request.maxPerOrder() : 10);
+        ticketType.setSalesStart(request.salesStart());
+        ticketType.setSalesEnd(request.salesEnd());
+        ticketType.setEvent(event);
+        
+        TicketType savedTicketType = ticketTypeRepository.save(ticketType);
+        
+        return ResponseEntity.ok(mapToTicketTypeResponse(savedTicketType));
+    }
+    
+    // Update a ticket type
+    @PutMapping("/{eventId}/ticket-types/{ticketTypeId}")
+    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    public ResponseEntity<?> updateTicketType(
+            @PathVariable UUID eventId,
+            @PathVariable UUID ticketTypeId,
+            @Valid @RequestBody TicketTypeRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        
+        // Verify the current user is the organizer
+        if (!event.getOrganizer().getId().equals(userDetails.getId()) && 
+            !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return ResponseEntity.status(403).body("Not authorized to modify this event");
+        }
+        
+        TicketType ticketType = ticketTypeRepository.findById(ticketTypeId)
+                .orElseThrow(() -> new RuntimeException("Ticket type not found"));
+        
+        ticketType.setName(request.name());
+        ticketType.setDescription(request.description());
+        ticketType.setPrice(request.price());
+        ticketType.setQuantityAvailable(request.quantityAvailable());
+        if (request.minPerOrder() != null) ticketType.setMinPerOrder(request.minPerOrder());
+        if (request.maxPerOrder() != null) ticketType.setMaxPerOrder(request.maxPerOrder());
+        if (request.salesStart() != null) ticketType.setSalesStart(request.salesStart());
+        if (request.salesEnd() != null) ticketType.setSalesEnd(request.salesEnd());
+        
+        TicketType updatedTicketType = ticketTypeRepository.save(ticketType);
+        
+        return ResponseEntity.ok(mapToTicketTypeResponse(updatedTicketType));
+    }
+    
+    // Delete a ticket type
+    @DeleteMapping("/{eventId}/ticket-types/{ticketTypeId}")
+    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    public ResponseEntity<?> deleteTicketType(
+            @PathVariable UUID eventId,
+            @PathVariable UUID ticketTypeId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        
+        // Verify the current user is the organizer
+        if (!event.getOrganizer().getId().equals(userDetails.getId()) && 
+            !userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return ResponseEntity.status(403).body("Not authorized to modify this event");
+        }
+        
+        TicketType ticketType = ticketTypeRepository.findById(ticketTypeId)
+                .orElseThrow(() -> new RuntimeException("Ticket type not found"));
+        
+        ticketTypeRepository.delete(ticketType);
+        
+        return ResponseEntity.ok().build();
     }
 
     // Helper method to map Event to EventResponse
