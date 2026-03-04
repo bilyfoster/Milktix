@@ -1,17 +1,45 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
+import { authApi } from '../utils/api'
+import { useAuthStore } from '../stores/authStore'
 
 export function Login() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { setAuth } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [successMessage] = useState(location.state?.message || '')
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Login:', formData)
+    setError('')
+    setIsLoading(true)
+
+    try {
+      const response = await authApi.login(formData.email, formData.password)
+      const { token, user } = response.data
+      
+      // Store auth in Zustand store (which persists to localStorage)
+      setAuth(token, user)
+      
+      // Also store token separately for API interceptor
+      localStorage.setItem('token', token)
+      
+      // Redirect to home page after successful login
+      navigate('/')
+    } catch (err: any) {
+      console.error('Login error:', err)
+      setError(err.response?.data?.message || 'Invalid email or password. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -27,6 +55,18 @@ export function Login() {
               </Link>
             </p>
           </div>
+
+          {successMessage && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">
+              {successMessage}
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+              {error}
+            </div>
+          )}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-5">
@@ -47,6 +87,7 @@ export function Login() {
                     placeholder="you@example.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -68,11 +109,13 @@ export function Login() {
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     className="absolute inset-y-0 right-0 pr-4 flex items-center text-warmgray-400 hover:text-warmgray-600"
                     onClick={() => setShowPassword(!showPassword)}
+                    disabled={isLoading}
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
@@ -98,9 +141,22 @@ export function Login() {
               </Link>
             </div>
 
-            <button type="submit" className="btn-primary w-full">
-              Sign in
-              <ArrowRight className="ml-2 h-5 w-5" />
+            <button 
+              type="submit" 
+              className="btn-primary w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  Sign in
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
             </button>
           </form>
 
@@ -115,7 +171,7 @@ export function Login() {
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-4">
-              <button type="button" className="btn-outline">
+              <button type="button" className="btn-outline" disabled={isLoading}>
                 <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -124,9 +180,9 @@ export function Login() {
                 </svg>
                 Google
               </button>
-              <button type="button" className="btn-outline">
+              <button type="button" className="btn-outline" disabled={isLoading}>
                 <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.366.83.402 1.768.1 2.623a3.827 3.827 0 010 2.12 3.723 3.723 0 01-.404 1.714l-.012.022c-.166.324-.338.657-.338 1.004 0 .483.28.9.688 1.116-.066.02-.134.038-.2.055-.718.186-1.42.283-2.115.283-3.458 0-6.612-1.854-8.291-4.798C1.29 13.188 1 12.11 1 11c0-3.866 3.134-7 7-7 1.956 0 3.726.8 5.002 2.09C14.278 4.8 16.048 4 18.004 4c3.866 0 7 3.134 7 7 0 1.11-.29 2.188-.838 3.163-.34.593-.77 1.134-1.275 1.608-.54.505-1.163.92-1.854 1.228-.69.308-1.446.479-2.237.479-.695 0-1.397-.097-2.115-.283-.066-.017-.134-.035-.2-.055.408-.216.688-.633.688-1.116 0-.347-.172-.68-.338-1.004l-.012-.022a3.723 3.723 0 01-.404-1.714 3.827 3.827 0 010-2.12c-.302-.855-.266-1.793.1-2.623z"/>
+                  <path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.366.83.402 1.768.1 2.623a3.827 3.827 0 010 2.12 3.723 3.723 0 01-.404 1.714l-.012.022c-.166.324-.338.657-.338 1.004 0 .483.28.9.688 1.116-.066.02-.134.038-.2.055-.718.186-1.42.283-2.115.283-3.458 0-6.612-1.854-8.291-4.798C1.29 13.188 1 12.11 1 11c0-3.866 3.134-7 7-7 1.956 0 3.726.8 5.002 2.09C14.278 4.8 16.048 4 18.004 4c3.866 0 7 3.134 7 7 0 1.11-.29 2.188-.838 3.163-.34.593-.77 1.134-1.275 1.608-.54.505-1.163.92-1.854 1.228-.69.308-1.446.479-2.237.479-.695 0-1.397-.097-2.115.283-.066.017-.134.035-.2.055.408-.216.688-.633.688-1.116 0-.347-.172-.68-.338-1.004l-.012-.022a3.723 3.723 0 01-.404-1.714 3.827 3.827 0 010-2.12c-.302-.855-.266-1.793.1-2.623z"/>
                 </svg>
                 GitHub
               </button>

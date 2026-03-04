@@ -1,12 +1,20 @@
-import { Link, Outlet, useLocation } from 'react-router-dom'
-import { Calendar, User, Menu, X, Ticket, Plus } from 'lucide-react'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Calendar, User, Menu, X, Ticket, Plus, LogOut } from 'lucide-react'
 import { useState } from 'react'
+import { useAuthStore } from '../stores/authStore'
 
 export function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, isAuthenticated, logout } = useAuthStore()
   
   const isActive = (path: string) => location.pathname === path
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
 
   return (
     <div className="min-h-screen bg-warmgray-50 flex flex-col">
@@ -50,20 +58,37 @@ export function Layout() {
             
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
-              <Link 
-                to="/login" 
-                className="btn-ghost text-sm"
-              >
-                <User className="h-4 w-4 mr-1.5" />
-                Sign In
-              </Link>
-              <Link 
-                to="/register" 
-                className="btn-primary text-sm py-2.5"
-              >
-                <Plus className="h-4 w-4 mr-1.5" />
-                Create Event
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <span className="text-sm text-warmgray-600">
+                    Hello, {user?.fullName || user?.username}
+                  </span>
+                  <button 
+                    onClick={handleLogout}
+                    className="btn-ghost text-sm"
+                  >
+                    <LogOut className="h-4 w-4 mr-1.5" />
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link 
+                    to="/login" 
+                    className="btn-ghost text-sm"
+                  >
+                    <User className="h-4 w-4 mr-1.5" />
+                    Sign In
+                  </Link>
+                  <Link 
+                    to="/register" 
+                    className="btn-primary text-sm py-2.5"
+                  >
+                    <Plus className="h-4 w-4 mr-1.5" />
+                    Create Event
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -106,22 +131,42 @@ export function Layout() {
               Events
             </Link>
             <div className="pt-2 border-t border-warmgray-100 mt-2">
-              <Link
-                to="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-warmgray-700 hover:bg-warmgray-100"
-              >
-                <User className="h-5 w-5" />
-                Sign In
-              </Link>
-              <Link
-                to="/register"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-coral-600 bg-coral-50 mt-2"
-              >
-                <Plus className="h-5 w-5" />
-                Create Event
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <div className="px-4 py-2 text-sm text-warmgray-600">
+                    Hello, {user?.fullName || user?.username}
+                  </div>
+                  <button
+                    onClick={() => {
+                      handleLogout()
+                      setMobileMenuOpen(false)
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-warmgray-700 hover:bg-warmgray-100"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-warmgray-700 hover:bg-warmgray-100"
+                  >
+                    <User className="h-5 w-5" />
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-coral-600 bg-coral-50 mt-2"
+                  >
+                    <Plus className="h-5 w-5" />
+                    Create Event
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
