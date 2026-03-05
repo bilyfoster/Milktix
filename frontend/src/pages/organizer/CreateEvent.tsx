@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, MapPin, Ticket, Plus, X, ChevronRight, Loader2 } from 'lucide-react'
-import { eventsApi } from '../../utils/api'
+import { Calendar, MapPin, Ticket, Plus, X, ChevronRight, Loader2, Search } from 'lucide-react'
+import { eventsApi, hostsApi, locationsApi } from '../../utils/api'
 
 interface TicketType {
   name: string
@@ -56,24 +56,35 @@ export function CreateEvent() {
   const [showNewHostForm, setShowNewHostForm] = useState(false)
   const [showNewLocationForm, setShowNewLocationForm] = useState(false)
   
+  // Search states
+  const [hostSearch, setHostSearch] = useState('')
+  const [locationSearch, setLocationSearch] = useState('')
+  
   // New host form
-  const [newHost, setNewHost] = useState({ name: '', bio: '', email: '', phone: '' })
+  const [newHost, setNewHost] = useState({ name: '', bio: '', email: '', phone: '', website: '' })
+  const [isCreatingHost, setIsCreatingHost] = useState(false)
   
   // New location form
   const [newLocation, setNewLocation] = useState({ 
-    name: '', address: '', city: '', state: '', zipCode: '', description: '' 
+    name: '', address: '', city: '', state: '', zipCode: '', description: '', website: '', phone: ''
   })
+  const [isCreatingLocation, setIsCreatingLocation] = useState(false)
 
-  // Load hosts and locations
+  // Load hosts and locations from API
   useEffect(() => {
-    // These would be real API calls in production
-    // For now, we'll use mock data
-    setHosts([
-      { id: '1', name: 'Your Organization', bio: 'Default host profile' }
-    ])
-    setLocations([
-      { id: '1', name: 'Virtual Event', address: 'Online', city: '', state: '' }
-    ])
+    const loadHostsAndLocations = async () => {
+      try {
+        const [hostsRes, locationsRes] = await Promise.all([
+          hostsApi.getMyHosts(),
+          locationsApi.getAll()
+        ])
+        setHosts(hostsRes.data || [])
+        setLocations(locationsRes.data || [])
+      } catch (err) {
+        console.error('Failed to load hosts/locations:', err)
+      }
+    }
+    loadHostsAndLocations()
   }, [])
 
   const handleAddTicketType = () => {
@@ -90,6 +101,49 @@ export function CreateEvent() {
     const updated = [...ticketTypes]
     updated[index] = { ...updated[index], [field]: value }
     setTicketTypes(updated)
+  }
+
+  const handleCreateHost = async () => {
+    if (!newHost.name) return
+    setIsCreatingHost(true)
+    try {
+      const response = await hostsApi.create(newHost)
+      const createdHost = response.data
+      setHosts([...hosts, createdHost])
+      setFormData({ ...formData, hostId: createdHost.id })
+      setNewHost({ name: '', bio: '', email: '', phone: '', website: '' })
+      setShowNewHostForm(false)
+    } catch (err: any) {
+      alert('Failed to create host: ' + (err.response?.data || err.message))
+    } finally {
+      setIsCreatingHost(false)
+    }
+  }
+
+  const handleCreateLocation = async () => {
+    if (!newLocation.name || !newLocation.address) return
+    setIsCreatingLocation(true)
+    try {
+      const response = await locationsApi.create({
+        name: newLocation.name,
+        address: newLocation.address,
+        city: newLocation.city,
+        state: newLocation.state,
+        zip: newLocation.zipCode,
+        description: newLocation.description,
+        website: newLocation.website,
+        phone: newLocation.phone
+      })
+      const createdLocation = response.data
+      setLocations([...locations, createdLocation])
+      setFormData({ ...formData, locationId: createdLocation.id })
+      setNewLocation({ name: '', address: '', city: '', state: '', zipCode: '', description: '', website: '', phone: '' })
+      setShowNewLocationForm(false)
+    } catch (err: any) {
+      alert('Failed to create location: ' + (err.response?.data || err.message))
+    } finally {
+      setIsCreatingLocation(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,17 +171,17 @@ export function CreateEvent() {
         hostId: formData.hostId || undefined,
         locationId: formData.locationId || undefined,
         categoryIds: formData.categoryIds,
-        ticketTypes: ticketTypes.map(tt => ({
+        ticketTypes: ticketTypes.length > 0 ? ticketTypes.map(tt => ({
           ...tt,
           price: Number(tt.price),
           quantityAvailable: Number(tt.quantityAvailable),
           minPerOrder: Number(tt.minPerOrder),
           maxPerOrder: Number(tt.maxPerOrder)
-        }))
+        })) : undefined
       }
 
       await eventsApi.create(eventData)
-      navigate('/organizer/events')
+      navigate('/organizer/manage-events')
     } catch (err: any) {
       setError(err.response?.data || 'Failed to create event')
     } finally {
@@ -140,6 +194,16 @@ export function CreateEvent() {
     { number: 2, title: 'Host & Location', icon: MapPin },
     { number: 3, title: 'Tickets', icon: Ticket },
   ]
+
+  // Filter hosts and locations based on search
+  const filteredHosts = hosts.filter(h => 
+    h.name.toLowerCase().includes(hostSearch.toLowerCase())
+  )
+  const filteredLocations = locations.filter(l => 
+    l.name.toLowerCase().includes(locationSearch.toLowerCase()) ||
+    l.address.toLowerCase().includes(locationSearch.toLowerCase()) ||
+    l.city.toLowerCase().includes(locationSearch.toLowerCase())
+  )
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -309,6 +373,18 @@ export function CreateEvent() {
               <h2 className="text-heading-sm font-bold text-warmgray-900 mb-4">Event Host</h2>
               
               <div className="space-y-4">
+                {/* Host Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-warmgray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search hosts..."
+                    className="input pl-10"
+                    value={hostSearch}
+                    onChange={(e) => setHostSearch(e.target.value)}
+                  />
+                </div>
+
                 <select
                   className="input"
                   value={formData.hostId}
@@ -322,11 +398,15 @@ export function CreateEvent() {
                   }}
                 >
                   <option value="">Select a host...</option>
-                  {hosts.map(host => (
+                  {filteredHosts.map(host => (
                     <option key={host.id} value={host.id}>{host.name}</option>
                   ))}
                   <option value="new">+ Create New Host</option>
                 </select>
+
+                {filteredHosts.length === 0 && hostSearch && (
+                  <p className="text-sm text-warmgray-500">No hosts found. Try a different search or create a new one.</p>
+                )}
 
                 {showNewHostForm && (
                   <div className="bg-warmgray-50 p-4 rounded-xl space-y-4">
@@ -337,6 +417,27 @@ export function CreateEvent() {
                       className="input"
                       value={newHost.name}
                       onChange={(e) => setNewHost({ ...newHost, name: e.target.value })}
+                    />
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      className="input"
+                      value={newHost.email}
+                      onChange={(e) => setNewHost({ ...newHost, email: e.target.value })}
+                    />
+                    <input
+                      type="tel"
+                      placeholder="Phone"
+                      className="input"
+                      value={newHost.phone}
+                      onChange={(e) => setNewHost({ ...newHost, phone: e.target.value })}
+                    />
+                    <input
+                      type="url"
+                      placeholder="Website"
+                      className="input"
+                      value={newHost.website}
+                      onChange={(e) => setNewHost({ ...newHost, website: e.target.value })}
                     />
                     <textarea
                       placeholder="Host Bio"
@@ -356,12 +457,14 @@ export function CreateEvent() {
                       <button
                         type="button"
                         className="btn-primary flex-1"
-                        onClick={() => {
-                          // Would create host via API
-                          setShowNewHostForm(false)
-                        }}
+                        onClick={handleCreateHost}
+                        disabled={isCreatingHost || !newHost.name}
                       >
-                        Create Host
+                        {isCreatingHost ? (
+                          <><Loader2 className="h-4 w-4 animate-spin mr-2 inline" /> Creating...</>
+                        ) : (
+                          'Create Host'
+                        )}
                       </button>
                     </div>
                   </div>
@@ -374,6 +477,18 @@ export function CreateEvent() {
               <h2 className="text-heading-sm font-bold text-warmgray-900 mb-4">Event Location</h2>
               
               <div className="space-y-4">
+                {/* Location Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-warmgray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search locations by name, address, or city..."
+                    className="input pl-10"
+                    value={locationSearch}
+                    onChange={(e) => setLocationSearch(e.target.value)}
+                  />
+                </div>
+
                 <select
                   className="input"
                   value={formData.locationId}
@@ -387,11 +502,17 @@ export function CreateEvent() {
                   }}
                 >
                   <option value="">Select a location...</option>
-                  {locations.map(loc => (
-                    <option key={loc.id} value={loc.id}>{loc.name} - {loc.address}</option>
+                  {filteredLocations.map(loc => (
+                    <option key={loc.id} value={loc.id}>
+                      {loc.name} {loc.city ? `- ${loc.city}` : ''}
+                    </option>
                   ))}
                   <option value="new">+ Create New Location</option>
                 </select>
+
+                {filteredLocations.length === 0 && locationSearch && (
+                  <p className="text-sm text-warmgray-500">No locations found. Try a different search or create a new one.</p>
+                )}
 
                 {showNewLocationForm && (
                   <div className="bg-warmgray-50 p-4 rounded-xl space-y-4">
@@ -433,6 +554,27 @@ export function CreateEvent() {
                         onChange={(e) => setNewLocation({ ...newLocation, zipCode: e.target.value })}
                       />
                     </div>
+                    <input
+                      type="tel"
+                      placeholder="Phone"
+                      className="input"
+                      value={newLocation.phone}
+                      onChange={(e) => setNewLocation({ ...newLocation, phone: e.target.value })}
+                    />
+                    <input
+                      type="url"
+                      placeholder="Website"
+                      className="input"
+                      value={newLocation.website}
+                      onChange={(e) => setNewLocation({ ...newLocation, website: e.target.value })}
+                    />
+                    <textarea
+                      placeholder="Description"
+                      rows={3}
+                      className="input"
+                      value={newLocation.description}
+                      onChange={(e) => setNewLocation({ ...newLocation, description: e.target.value })}
+                    />
                     <div className="flex gap-3">
                       <button
                         type="button"
@@ -444,12 +586,14 @@ export function CreateEvent() {
                       <button
                         type="button"
                         className="btn-primary flex-1"
-                        onClick={() => {
-                          // Would create location via API
-                          setShowNewLocationForm(false)
-                        }}
+                        onClick={handleCreateLocation}
+                        disabled={isCreatingLocation || !newLocation.name || !newLocation.address}
                       >
-                        Create Location
+                        {isCreatingLocation ? (
+                          <><Loader2 className="h-4 w-4 animate-spin mr-2 inline" /> Creating...</>
+                        ) : (
+                          'Create Location'
+                        )}
                       </button>
                     </div>
                   </div>

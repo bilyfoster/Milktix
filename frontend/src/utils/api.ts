@@ -81,4 +81,39 @@ export const organizerRequestApi = {
   getPendingCount: () => api.get('/organizer-requests/pending-count'),
 };
 
+// Hosts API
+export const hostsApi = {
+  getAll: () => api.get('/hosts'),
+  getMyHosts: () => api.get('/hosts/my'),
+  getById: (id: string) => api.get(`/hosts/${id}`),
+  create: (data: {
+    name: string;
+    bio?: string;
+    email?: string;
+    phone?: string;
+    website?: string;
+    imageUrl?: string;
+  }) => api.post('/hosts', data),
+};
+
+// Locations API
+export const locationsApi = {
+  getAll: () => api.get('/locations'),
+  getById: (id: string) => api.get(`/locations/${id}`),
+  search: (query: string) => api.get(`/locations/search?q=${encodeURIComponent(query)}`),
+  create: (data: {
+    name: string;
+    address: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    country?: string;
+    description?: string;
+    imageUrl?: string;
+    website?: string;
+    phone?: string;
+    capacity?: number;
+  }) => api.post('/locations', data),
+};
+
 export default api;
