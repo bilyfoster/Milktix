@@ -27,6 +27,7 @@ import { ForgotPassword } from './pages/ForgotPassword'
 import { ResetPassword } from './pages/ResetPassword'
 import { CmsPage } from './pages/CmsPage'
 import { CmsPages } from './pages/admin/CmsPages'
+import { PromoCodes } from './pages/admin/PromoCodes'
 
 // Organizer Dashboard Pages
 import { OrganizerDashboard } from './pages/organizer/Dashboard'
@@ -66,6 +67,7 @@ function App() {
           <Route path="locations" element={<AdminLocations />} />
           <Route path="reports" element={<div className="card p-12 text-center"><h2 className="text-xl font-semibold text-warmgray-900">Reports</h2><p className="text-warmgray-600 mt-2">Reports dashboard coming soon.</p></div>} />
           <Route path="content" element={<CmsPages />} />
+          <Route path="promo-codes" element={<PromoCodes />} />
         </Route>
         <Route path="hosts/:id" element={<HostProfile />} />
         <Route path="locations/:id" element={<LocationPage />} />

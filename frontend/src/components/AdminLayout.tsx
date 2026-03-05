@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Users, MapPin, Shield, Building2, ChevronLeft, LogOut, Loader2, Ticket, Calendar, BarChart3, UserCircle, ChevronDown, FileText } from 'lucide-react'
+import { Users, MapPin, Shield, Building2, ChevronLeft, LogOut, Loader2, Ticket, Calendar, BarChart3, UserCircle, ChevronDown, FileText, Tag } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { useEffect, useState } from 'react'
 import { getVersionString } from '../version'
@@ -12,6 +12,7 @@ const adminLinks = [
   { path: '/admin/locations', label: 'Manage Locations', icon: MapPin },
   { path: '/admin/reports', label: 'Reports', icon: BarChart3 },
   { path: '/admin/content', label: 'Content', icon: FileText },
+  { path: '/admin/promo-codes', label: 'Promo Codes', icon: Tag },
 ]
 
 export function AdminLayout() {
