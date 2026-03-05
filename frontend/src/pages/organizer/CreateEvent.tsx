@@ -480,70 +480,129 @@ export function CreateEvent() {
         {step === 3 && (
           <div className="space-y-6">
             <div className="card p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-heading-sm font-bold text-warmgray-900">Ticket Types</h2>
-                <button
-                  type="button"
-                  onClick={handleAddTicketType}
-                  className="btn-outline text-sm"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Ticket Type
-                </button>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-heading-sm font-bold text-warmgray-900">Tickets</h2>
+                  <p className="text-sm text-warmgray-600 mt-1">Add ticket types for your event or make it free/RSVP only</p>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={ticketTypes.length === 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setTicketTypes([])
+                      } else {
+                        setTicketTypes([{ name: 'General Admission', description: '', price: 0, quantityAvailable: 100, minPerOrder: 1, maxPerOrder: 10 }])
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-warmgray-300 text-coral-600"
+                  />
+                  <span className="text-sm text-warmgray-700">Free/No tickets</span>
+                </label>
               </div>
 
-              <div className="space-y-4">
-                {ticketTypes.map((ticket, index) => (
-                  <div key={index} className="bg-warmgray-50 p-4 rounded-xl">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-medium text-warmgray-900">Ticket Type {index + 1}</h3>
-                      {ticketTypes.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveTicketType(index)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <X className="h-5 w-5" />
-                        </button>
-                      )}
+              {ticketTypes.length === 0 ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                  <p className="text-blue-800">This event will have no ticket sales. Attendees can RSVP or attend for free.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {ticketTypes.map((ticket, index) => (
+                    <div key={index} className="bg-warmgray-50 p-4 rounded-xl">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-warmgray-900">Ticket Type {index + 1}</h3>
+                        {ticketTypes.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTicketType(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                      
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-medium text-warmgray-600 mb-1">Ticket Name *</label>
+                          <input
+                            type="text"
+                            placeholder="e.g., General Admission, VIP, Early Bird"
+                            className="input"
+                            value={ticket.name}
+                            onChange={(e) => handleTicketChange(index, 'name', e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-warmgray-600 mb-1">Price ($) *</label>
+                          <input
+                            type="number"
+                            placeholder="0.00 for free events"
+                            className="input"
+                            value={ticket.price}
+                            onChange={(e) => handleTicketChange(index, 'price', parseFloat(e.target.value) || 0)}
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-warmgray-600 mb-1">Quantity Available *</label>
+                          <input
+                            type="number"
+                            placeholder="Number of tickets"
+                            className="input"
+                            value={ticket.quantityAvailable}
+                            onChange={(e) => handleTicketChange(index, 'quantityAvailable', parseInt(e.target.value) || 0)}
+                            min="1"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-warmgray-600 mb-1">Description</label>
+                          <input
+                            type="text"
+                            placeholder="What's included with this ticket?"
+                            className="input"
+                            value={ticket.description}
+                            onChange={(e) => handleTicketChange(index, 'description', e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-warmgray-600 mb-1">Min Per Order</label>
+                          <input
+                            type="number"
+                            placeholder="1"
+                            className="input"
+                            value={ticket.minPerOrder}
+                            onChange={(e) => handleTicketChange(index, 'minPerOrder', parseInt(e.target.value) || 1)}
+                            min="1"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-warmgray-600 mb-1">Max Per Order</label>
+                          <input
+                            type="number"
+                            placeholder="10"
+                            className="input"
+                            value={ticket.maxPerOrder}
+                            onChange={(e) => handleTicketChange(index, 'maxPerOrder', parseInt(e.target.value) || 10)}
+                            min="1"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <input
-                        type="text"
-                        placeholder="Ticket Name *"
-                        className="input"
-                        value={ticket.name}
-                        onChange={(e) => handleTicketChange(index, 'name', e.target.value)}
-                      />
-                      <input
-                        type="number"
-                        placeholder="Price ($)"
-                        className="input"
-                        value={ticket.price}
-                        onChange={(e) => handleTicketChange(index, 'price', e.target.value)}
-                        min="0"
-                        step="0.01"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Quantity Available"
-                        className="input"
-                        value={ticket.quantityAvailable}
-                        onChange={(e) => handleTicketChange(index, 'quantityAvailable', e.target.value)}
-                        min="1"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Description"
-                        className="input"
-                        value={ticket.description}
-                        onChange={(e) => handleTicketChange(index, 'description', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                  
+                  <button
+                    type="button"
+                    onClick={handleAddTicketType}
+                    className="btn-outline text-sm w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-1 inline" />
+                    Add Another Ticket Type
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-between">
