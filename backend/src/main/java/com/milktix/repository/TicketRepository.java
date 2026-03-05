@@ -1,5 +1,6 @@
 package com.milktix.repository;
 
+import com.milktix.entity.Event;
 import com.milktix.entity.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -18,4 +19,6 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
     List<Ticket> findByAttendeeId(UUID attendeeId);
 
     long countByTicketTypeIdAndStatus(UUID ticketTypeId, Ticket.Status status);
+
+    List<Ticket> findByTicketType_Event(Event event);
 }

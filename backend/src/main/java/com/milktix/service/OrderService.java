@@ -42,6 +42,12 @@ public class OrderService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private EmailService emailService;
+
+    @Value("${milktix.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
+
     @PostConstruct
     public void init() {
         Stripe.apiKey = stripeSecretKey;
@@ -164,6 +170,60 @@ public class OrderService {
             String qrData = generateQRCodeData(ticket);
             ticket.setQrCodeData(qrData);
             ticketRepository.save(ticket);
+        }
+
+        // Send ticket confirmation email
+        sendTicketConfirmationEmail(order, tickets);
+    }
+
+    private void sendTicketConfirmationEmail(Order order, List<Ticket> tickets) {
+        try {
+            // Build ticket details string
+            StringBuilder ticketDetails = new StringBuilder();
+            ticketDetails.append("<ul>");
+            for (Ticket ticket : tickets) {
+                ticketDetails.append("<li>");
+                ticketDetails.append("<strong>").append(ticket.getTicketType().getName()).append("</strong> - ");
+                ticketDetails.append("Ticket #").append(ticket.getTicketNumber());
+                ticketDetails.append("</li>");
+            }
+            ticketDetails.append("</ul>");
+
+            // Create QR code URL (placeholder - in real app would generate actual QR image)
+            String qrCodeUrl = frontendUrl + "/orders/" + order.getId();
+
+            Map<String, String> variables = Map.of(
+                "firstName", order.getBillingName(),
+                "eventTitle", order.getEvent().getTitle(),
+                "eventDate", order.getEvent().getStartDateTime().toLocalDate().toString(),
+                "eventTime", order.getEvent().getStartDateTime().toLocalTime().toString(),
+                "eventLocation", order.getEvent().getVenueName(),
+                "ticketDetails", ticketDetails.toString(),
+                "orderTotal", order.getTotalAmount().toString(),
+                "qrCodeUrl", qrCodeUrl
+            );
+
+            emailService.sendTicketConfirmationEmail(order.getBillingEmail(), variables);
+            
+            // Also send notification to organizer
+            User organizer = order.getEvent().getHost().getUser();
+            if (organizer != null && organizer.getEmail() != null) {
+                Map<String, String> organizerVars = Map.of(
+                    "organizerName", organizer.getFullName(),
+                    "eventTitle", order.getEvent().getTitle(),
+                    "ticketCount", String.valueOf(tickets.size()),
+                    "buyerName", order.getBillingName(),
+                    "buyerEmail", order.getBillingEmail(),
+                    "ticketType", tickets.get(0).getTicketType().getName(),
+                    "saleAmount", order.getTotalAmount().toString(),
+                    "orderId", order.getOrderNumber(),
+                    "orderUrl", frontendUrl + "/organizer/orders"
+                );
+                emailService.sendNewSaleNotification(organizer.getEmail(), organizerVars);
+            }
+        } catch (Exception e) {
+            // Log error but don't fail the order
+            System.err.println("Failed to send confirmation email: " + e.getMessage());
         }
     }
 

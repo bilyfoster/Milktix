@@ -48,4 +48,8 @@ public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecific
 
     // Find all events ordered by date (for admin)
     List<Event> findAllByOrderByStartDateTimeDesc();
+
+    // Find events starting between dates (for reminders)
+    List<Event> findByStartDateTimeBetweenAndStatus(
+            LocalDateTime start, LocalDateTime end, Event.Status status);
 }

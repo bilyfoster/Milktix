@@ -5,8 +5,10 @@ import com.milktix.entity.User;
 import com.milktix.repository.UserRepository;
 import com.milktix.security.JwtUtils;
 import com.milktix.security.UserDetailsImpl;
+import com.milktix.service.EmailService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -34,6 +36,12 @@ public class AuthController {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Value("${milktix.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -86,6 +94,13 @@ public class AuthController {
 
             user.setRole(User.Role.ATTENDEE);
             userRepository.save(user);
+
+            // Send welcome email
+            emailService.sendWelcomeEmail(
+                user.getEmail(),
+                user.getFullName(),
+                frontendUrl + "/login"
+            );
 
             return ResponseEntity.ok("User registered successfully!");
         } catch (Exception e) {
