@@ -78,7 +78,10 @@ export function CreateEvent() {
           hostsApi.getMyHosts(),
           locationsApi.getAll()
         ])
-        setHosts(hostsRes.data || [])
+        // Handle case where user has no host profile (returns {hasHost: false})
+        const hostsData = Array.isArray(hostsRes.data) ? hostsRes.data : 
+                         hostsRes.data?.hasHost === false ? [] : [hostsRes.data].filter(Boolean)
+        setHosts(hostsData)
         setLocations(locationsRes.data || [])
       } catch (err) {
         console.error('Failed to load hosts/locations:', err)
