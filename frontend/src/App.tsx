@@ -21,6 +21,8 @@ import { About } from './pages/About'
 import { Contact } from './pages/Contact'
 import { Terms } from './pages/Terms'
 import { Privacy } from './pages/Privacy'
+import { CmsPage } from './pages/CmsPage'
+import { CmsPages } from './pages/admin/CmsPages'
 
 // Organizer Dashboard Pages
 import { OrganizerDashboard } from './pages/organizer/Dashboard'
@@ -53,6 +55,7 @@ function App() {
           <Route path="hosts" element={<AdminHosts />} />
           <Route path="locations" element={<AdminLocations />} />
           <Route path="reports" element={<div className="card p-12 text-center"><h2 className="text-xl font-semibold text-warmgray-900">Reports</h2><p className="text-warmgray-600 mt-2">Reports dashboard coming soon.</p></div>} />
+          <Route path="content" element={<CmsPages />} />
         </Route>
         <Route path="hosts/:id" element={<HostProfile />} />
         <Route path="locations/:id" element={<LocationPage />} />
@@ -61,6 +64,7 @@ function App() {
         <Route path="contact" element={<Contact />} />
         <Route path="terms" element={<Terms />} />
         <Route path="privacy" element={<Privacy />} />
+        <Route path="page/:slug" element={<CmsPage />} />
       </Route>
 
       {/* Organizer Dashboard Routes - Nested Layout */}
