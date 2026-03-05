@@ -52,4 +52,15 @@ public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecific
     // Find events starting between dates (for reminders)
     List<Event> findByStartDateTimeBetweenAndStatus(
             LocalDateTime start, LocalDateTime end, Event.Status status);
+
+    // Find events by organizer
+    List<Event> findByOrganizer(User organizer);
+
+    // Count upcoming events
+    long countByStartDateTimeAfterAndStatus(LocalDateTime date, Event.Status status);
+
+    // Find events with check-in between dates
+    @Query("SELECT DISTINCT e FROM Event e JOIN Ticket t ON t.ticketType.event = e " +
+           "WHERE e.startDateTime BETWEEN :start AND :end")
+    List<Event> findEventsWithTicketsBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

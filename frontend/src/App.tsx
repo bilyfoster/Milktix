@@ -40,6 +40,8 @@ import { Hosts } from './pages/organizer/Hosts'
 import { Locations } from './pages/organizer/Locations'
 import { EventTemplates } from './pages/organizer/EventTemplates'
 import { CreateTemplate } from './pages/organizer/CreateTemplate'
+import { CheckIn } from './pages/organizer/CheckIn'
+import { Analytics } from './pages/organizer/Analytics'
 
 function App() {
   const { checkAuth } = useAuthStore()
@@ -93,6 +95,8 @@ function App() {
         <Route path="locations" element={<Locations />} />
         <Route path="templates" element={<EventTemplates />} />
         <Route path="templates/create" element={<CreateTemplate />} />
+        <Route path="events/:eventId/checkin" element={<CheckIn />} />
+        <Route path="events/:eventId/analytics" element={<Analytics />} />
       </Route>
     </Routes>
   )
