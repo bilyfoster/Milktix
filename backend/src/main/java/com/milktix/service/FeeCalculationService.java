@@ -59,14 +59,14 @@ public class FeeCalculationService {
         PlatformSettings settings = getSettingsOrDefault();
 
         // Calculate platform fee (percentage + fixed)
-        BigDecimal platformFeePercentage = settings.getPlatformFeePercentage();
+        BigDecimal platformFeePercentage = settings.getPlatformFeePercent();
         BigDecimal platformFeeFixed = settings.getPlatformFeeFixed();
         BigDecimal platformFeeAmount = subtotal.multiply(platformFeePercentage)
                 .add(platformFeeFixed)
                 .setScale(DEFAULT_SCALE, DEFAULT_ROUNDING);
 
         // Calculate Stripe fee (percentage + fixed)
-        BigDecimal stripeFeePercentage = settings.getStripeFeePercentage();
+        BigDecimal stripeFeePercentage = settings.getStripeFeePercent();
         BigDecimal stripeFeeFixed = settings.getStripeFeeFixed();
         BigDecimal stripeFeeAmount = subtotal.multiply(stripeFeePercentage)
                 .add(stripeFeeFixed)
@@ -107,7 +107,7 @@ public class FeeCalculationService {
         PlatformSettings settings = getSettingsOrDefault();
 
         // Platform fee is deducted from the organizer's payout
-        BigDecimal platformFeePercentage = settings.getPlatformFeePercentage();
+        BigDecimal platformFeePercentage = settings.getPlatformFeePercent();
         BigDecimal platformFeeFixed = settings.getPlatformFeeFixed();
         BigDecimal platformFeeAmount = grossRevenue.multiply(platformFeePercentage)
                 .add(platformFeeFixed)
@@ -141,18 +141,18 @@ public class FeeCalculationService {
             throw new IllegalArgumentException("Platform settings DTO cannot be null");
         }
 
-        PlatformSettings settings = platformSettingsRepository.findById(1L)
+        PlatformSettings settings = platformSettingsRepository.findFirstByOrderByCreatedAtAsc()
                 .orElse(new PlatformSettings());
 
         // If new settings, set the ID
         if (settings.getId() == null) {
-            settings.setId(1L);
+            // Settings will get auto-generated UUID on save
         }
 
         // Update fields
-        settings.setPlatformFeePercentage(dto.getPlatformFeePercentage());
+        settings.setPlatformFeePercent(dto.getPlatformFeePercentage());
         settings.setPlatformFeeFixed(dto.getPlatformFeeFixed());
-        settings.setStripeFeePercentage(dto.getStripeFeePercentage());
+        settings.setStripeFeePercent(dto.getStripeFeePercentage());
         settings.setStripeFeeFixed(dto.getStripeFeeFixed());
 
         PlatformSettings saved = platformSettingsRepository.save(settings);
@@ -163,7 +163,7 @@ public class FeeCalculationService {
      * Get settings from repository or return defaults if none exist.
      */
     private PlatformSettings getSettingsOrDefault() {
-        Optional<PlatformSettings> optional = platformSettingsRepository.findById(1L);
+        Optional<PlatformSettings> optional = platformSettingsRepository.findFirstByOrderByCreatedAtAsc();
         
         if (optional.isPresent()) {
             return optional.get();
@@ -171,10 +171,10 @@ public class FeeCalculationService {
 
         // Return default settings
         PlatformSettings defaults = new PlatformSettings();
-        defaults.setId(1L);
-        defaults.setPlatformFeePercentage(DEFAULT_PLATFORM_FEE_PERCENTAGE);
+        // No ID needed for transient instance
+        defaults.setPlatformFeePercent(DEFAULT_PLATFORM_FEE_PERCENTAGE);
         defaults.setPlatformFeeFixed(DEFAULT_PLATFORM_FEE_FIXED);
-        defaults.setStripeFeePercentage(DEFAULT_STRIPE_FEE_PERCENTAGE);
+        defaults.setStripeFeePercent(DEFAULT_STRIPE_FEE_PERCENTAGE);
         defaults.setStripeFeeFixed(DEFAULT_STRIPE_FEE_FIXED);
         return defaults;
     }
@@ -184,9 +184,9 @@ public class FeeCalculationService {
      */
     private PlatformSettingsDTO mapToDTO(PlatformSettings settings) {
         return new PlatformSettingsDTO(
-                settings.getPlatformFeePercentage(),
+                settings.getPlatformFeePercent(),
                 settings.getPlatformFeeFixed(),
-                settings.getStripeFeePercentage(),
+                settings.getStripeFeePercent(),
                 settings.getStripeFeeFixed()
         );
     }
