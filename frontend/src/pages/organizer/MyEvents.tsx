@@ -34,7 +34,7 @@ export function MyEvents() {
 
   const loadEvents = async () => {
     try {
-      const response = await eventsApi.getAll()
+      const response = await eventsApi.getMyEvents()
       setEvents(response.data || [])
     } catch (err) {
       console.error('Failed to load events:', err)

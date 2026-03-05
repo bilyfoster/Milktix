@@ -33,7 +33,7 @@ export function OrganizerDashboard() {
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        const response = await eventsApi.getAll()
+        const response = await eventsApi.getMyEvents()
         const events = response.data || []
         
         const upcoming = events.filter((e: any) => e.isUpcoming)

@@ -36,6 +36,7 @@ export const authApi = {
 // Events API
 export const eventsApi = {
   getAll: () => api.get('/events'),
+  getMyEvents: () => api.get('/events/my'),
   getById: (id: string) => api.get(`/events/${id}`),
   create: (data: any) => api.post('/events', data),
 };

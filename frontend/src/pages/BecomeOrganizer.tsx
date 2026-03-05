@@ -64,7 +64,9 @@ export function BecomeOrganizer() {
       const response = await organizerRequestApi.getMyRequest()
       setExistingRequest(response.data)
     } catch (err: any) {
-      setError(err.response?.data || 'Failed to submit request. Please try again.')
+      console.error('Organizer request error:', err)
+      const errorMessage = err.response?.data || err.message || 'Failed to submit request. Please try again.'
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }

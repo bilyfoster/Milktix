@@ -39,12 +39,25 @@ public class EventController {
     @Autowired
     private LocationRepository locationRepository;
 
-    // Get all published upcoming events
+    // Get all published upcoming events (public)
     @GetMapping
     public ResponseEntity<List<EventResponse>> getAllEvents() {
         List<Event> events = eventRepository
                 .findByStatusAndStartDateTimeAfterOrderByStartDateTimeAsc(
                         Event.Status.PUBLISHED, LocalDateTime.now());
+        
+        return ResponseEntity.ok(events.stream()
+                .map(this::mapToEventResponse)
+                .collect(Collectors.toList()));
+    }
+
+    // Get my events (for organizers)
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    public ResponseEntity<List<EventResponse>> getMyEvents(
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        List<Event> events = eventRepository
+                .findByOrganizerIdOrderByStartDateTimeDesc(userDetails.getId());
         
         return ResponseEntity.ok(events.stream()
                 .map(this::mapToEventResponse)

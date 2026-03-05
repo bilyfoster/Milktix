@@ -27,6 +27,9 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     // Find events by organizer
     List<Event> findByOrganizerOrderByStartDateTimeDesc(User organizer);
 
+    // Find events by organizer ID
+    List<Event> findByOrganizerIdOrderByStartDateTimeDesc(UUID organizerId);
+
     // Search events by title or description
     @Query("SELECT e FROM Event e WHERE e.status = 'PUBLISHED' AND " +
            "(LOWER(e.title) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
