@@ -1,7 +1,10 @@
 package com.milktix.controller;
 
+import com.milktix.entity.User;
+import com.milktix.service.EmailService;
 import com.milktix.service.PasswordResetService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +17,12 @@ public class PasswordResetController {
 
     @Autowired
     private PasswordResetService passwordResetService;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Value("${milktix.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
 
     // Request password reset
     @PostMapping("/forgot-password")
@@ -32,13 +41,21 @@ public class PasswordResetController {
         // Example email link: https://milktix.com/reset-password?token=xyz
         
         if (token != null) {
-            // TODO: Send email with reset link
-            // emailService.sendPasswordResetEmail(email, token);
+            // Get user details for email
+            User user = passwordResetService.getUserByToken(token);
+            if (user != null) {
+                // Send actual email
+                emailService.sendPasswordResetEmail(
+                    email,
+                    user.getFullName(),
+                    token,
+                    frontendUrl
+                );
+            }
             
-            // For development, include token in response
             return ResponseEntity.ok(Map.of(
                 "message", "If an account exists with this email, you will receive password reset instructions.",
-                "devToken", token  // Remove this in production!
+                "devToken", emailService.isEmailEnabled() ? null : token  // Only show token if email disabled
             ));
         } else {
             // Same message for security (don't reveal if email exists)

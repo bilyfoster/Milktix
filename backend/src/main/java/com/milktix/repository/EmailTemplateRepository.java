@@ -10,5 +10,5 @@ import java.util.UUID;
 @Repository
 public interface EmailTemplateRepository extends JpaRepository<EmailTemplate, UUID> {
     Optional<EmailTemplate> findByName(String name);
-    Optional<EmailTemplate> findByNameAndIsActiveTrue(String name);
+    boolean existsByName(String name);
 }
