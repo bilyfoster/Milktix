@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, Search, PlusCircle, Eye, Edit, User, MapPin, Loader2 } from 'lucide-react'
+import { Calendar, Search, PlusCircle, Eye, User, MapPin, Loader2 } from 'lucide-react'
 import { eventsApi } from '../utils/api'
 
 interface Event {
@@ -272,6 +272,7 @@ export function AdminEvents() {
                   >
                     <Eye className="h-4 w-4" />
                   </Link>
+                  {/* Edit - TODO: Implement edit event page
                   <Link
                     to={`/organizer/events/${event.id}/edit`}
                     className="btn-ghost text-sm py-2"
@@ -279,6 +280,7 @@ export function AdminEvents() {
                   >
                     <Edit className="h-4 w-4" />
                   </Link>
+                  */}
                 </div>
               </div>
             </div>
