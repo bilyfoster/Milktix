@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Calendar, PlusCircle, MapPin, Users, Ticket, LogOut, ChevronLeft, ShoppingCart } from 'lucide-react'
+import { LayoutDashboard, Calendar, PlusCircle, MapPin, Users, Ticket, LogOut, ChevronLeft, ShoppingCart, Tag } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '../stores/authStore'
 import { getVersionString } from '../version'
@@ -24,6 +24,7 @@ export function OrganizerLayout() {
     { path: '/organizer/orders', label: 'Orders', icon: ShoppingCart },
     { path: '/organizer/hosts', label: 'Hosts', icon: Users },
     { path: '/organizer/locations', label: 'Locations', icon: MapPin },
+    { path: '/organizer/promo-codes', label: 'Promo Codes', icon: Tag },
   ]
 
   return (

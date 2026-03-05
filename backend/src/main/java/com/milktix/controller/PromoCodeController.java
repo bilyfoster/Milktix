@@ -62,11 +62,57 @@ public class PromoCodeController {
         }
     }
 
-    // Get all promo codes (admin only)
+    // Get all promo codes (admin can see all, organizer can see their host's codes)
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
-    public ResponseEntity<List<PromoCode>> getAllPromoCodes() {
-        return ResponseEntity.ok(promoCodeService.getAllPromoCodes());
+    public ResponseEntity<?> getAllPromoCodes(
+            @RequestParam(required = false) UUID hostId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        boolean isAdmin = userDetails.getRole().equals("ADMIN");
+        
+        if (isAdmin) {
+            // Admin can filter by host or get all
+            return ResponseEntity.ok(promoCodeService.getAllPromoCodes(hostId));
+        } else {
+            // Organizer can only see their host's codes
+            var hostOpt = promoCodeService.getHostByUserId(userDetails.getId());
+            if (hostOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Organizer is not associated with a host");
+            }
+            return ResponseEntity.ok(promoCodeService.getPromoCodesByHost(hostOpt.get().getId()));
+        }
+    }
+
+    // Get my host's promo codes (organizer only)
+    @GetMapping("/my-codes")
+    @PreAuthorize("hasRole('ORGANIZER')")
+    public ResponseEntity<?> getMyPromoCodes(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        var hostOpt = promoCodeService.getHostByUserId(userDetails.getId());
+        if (hostOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Organizer is not associated with a host");
+        }
+        return ResponseEntity.ok(promoCodeService.getPromoCodesByHost(hostOpt.get().getId()));
+    }
+
+    // Create host-specific promo code (organizer only)
+    @PostMapping("/host-specific")
+    @PreAuthorize("hasRole('ORGANIZER')")
+    public ResponseEntity<?> createHostPromoCode(
+            @RequestBody PromoCode promoCode,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        try {
+            var hostOpt = promoCodeService.getHostByUserId(userDetails.getId());
+            if (hostOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Organizer is not associated with a host");
+            }
+            
+            PromoCode created = promoCodeService.createHostPromoCode(
+                promoCode, userDetails.getId(), hostOpt.get().getId());
+            return ResponseEntity.ok(created);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     // Get active promo codes (public)
@@ -78,9 +124,30 @@ public class PromoCodeController {
     // Get promo code by ID
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('ORGANIZER')")
-    public ResponseEntity<?> getPromoCodeById(@PathVariable UUID id) {
+    public ResponseEntity<?> getPromoCodeById(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        boolean isAdmin = userDetails.getRole().equals("ADMIN");
+        
         return promoCodeService.getPromoCodeById(id)
-            .map(ResponseEntity::ok)
+            .map(promoCode -> {
+                // If not admin, check if organizer can access this promo code
+                if (!isAdmin) {
+                    if (promoCode.getScope() == PromoCode.Scope.HOST_SPECIFIC) {
+                        var hostOpt = promoCodeService.getHostByUserId(userDetails.getId());
+                        if (hostOpt.isEmpty() || 
+                            promoCode.getHost() == null || 
+                            !promoCode.getHost().getId().equals(hostOpt.get().getId())) {
+                            return ResponseEntity.status(403).body("Access denied");
+                        }
+                    } else {
+                        // Organizers can only view HOST_SPECIFIC codes
+                        return ResponseEntity.status(403).body("Access denied");
+                    }
+                }
+                return ResponseEntity.ok(promoCode);
+            })
             .orElse(ResponseEntity.notFound().build());
     }
 

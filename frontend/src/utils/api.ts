@@ -148,6 +148,44 @@ export const locationsApi = {
   delete: (id: string) => api.delete(`/locations/${id}`),
 };
 
+// Blog API
+export const blogApi = {
+  getAll: (params?: { category?: string; limit?: number; exclude?: string }) =>
+    api.get('/blog/posts', { params }),
+  getBySlug: (slug: string) => api.get(`/blog/posts/${slug}`),
+  getAdminAll: () => api.get('/blog/posts/admin'),
+  getAdminById: (id: string) => api.get(`/blog/posts/admin/${id}`),
+  create: (data: any) => api.post('/blog/posts', data),
+  update: (id: string, data: any) => api.put(`/blog/posts/${id}`, data),
+  delete: (id: string) => api.delete(`/blog/posts/${id}`),
+  updateStatus: (id: string, status: string) => api.patch(`/blog/posts/${id}/status`, { status }),
+  getCategories: () => api.get('/blog/categories'),
+}
+
+// Promo Codes API
+export const promoCodesApi = {
+  // Get all promo codes (admin gets all, organizer gets their host-specific)
+  getPromoCodes: () => api.get('/promo-codes'),
+  
+  // Get only host-specific promo codes for the current organizer
+  getHostPromoCodes: () => api.get('/promo-codes/my-host'),
+  
+  // Create a new promo code (admin)
+  createPromoCode: (data: any) => api.post('/promo-codes', data),
+  
+  // Create a new host-specific promo code (organizer)
+  createHostPromoCode: (data: any) => api.post('/promo-codes/host', data),
+  
+  // Update a promo code
+  updatePromoCode: (id: string, data: any) => api.put(`/promo-codes/${id}`, data),
+  
+  // Delete a promo code
+  deletePromoCode: (id: string) => api.delete(`/promo-codes/${id}`),
+  
+  // Get usage statistics for a promo code
+  getPromoCodeUsage: (id: string) => api.get(`/promo-codes/${id}/usage`),
+};
+
 // Admin API
 export const adminApi = {
   // Users
@@ -185,6 +223,28 @@ export const adminApi = {
   
   exportEvents: (format: 'csv' | 'json' = 'csv') => 
     api.get(`/admin/events/export?format=${format}`, { responseType: 'blob' }),
+  
+  // Orders Admin
+  getOrders: (params?: {
+    status?: string;
+    event?: string;
+    user?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => api.get('/admin/orders', { params }),
+  
+  getOrderById: (id: string) => api.get(`/admin/orders/${id}`),
+  
+  refundOrder: (id: string, data: { amount?: number; reason?: string }) => 
+    api.post(`/admin/orders/${id}/refund`, data),
+  
+  cancelOrder: (id: string, reason: string) => 
+    api.post(`/admin/orders/${id}/cancel`, { reason }),
+  
+  resendOrderEmail: (id: string) => api.post(`/admin/orders/${id}/resend-email`),
 };
 
 export default api;

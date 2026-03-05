@@ -21,7 +21,8 @@ public class PromoCode {
 
     public enum Scope {
         GLOBAL,          // All events
-        EVENT_SPECIFIC   // Specific event only
+        EVENT_SPECIFIC,  // Specific event only
+        HOST_SPECIFIC    // All events for a specific host
     }
 
     @Id
@@ -48,6 +49,10 @@ public class PromoCode {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "host_id")
+    private Host host;
 
     @ElementCollection
     @CollectionTable(name = "promo_code_ticket_types", joinColumns = @JoinColumn(name = "promo_code_id"))
@@ -101,6 +106,9 @@ public class PromoCode {
 
     public Event getEvent() { return event; }
     public void setEvent(Event event) { this.event = event; }
+
+    public Host getHost() { return host; }
+    public void setHost(Host host) { this.host = host; }
 
     public List<UUID> getApplicableTicketTypes() { return applicableTicketTypes; }
     public void setApplicableTicketTypes(List<UUID> applicableTicketTypes) { this.applicableTicketTypes = applicableTicketTypes; }

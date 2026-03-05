@@ -1,10 +1,38 @@
-import { useEffect } from 'react'
-import { Calendar, Users, Ticket, Shield, Zap, Heart } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Calendar, Users, Ticket, Shield, Zap, Heart, Loader2, Edit } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import api from '../utils/api'
+import { useAuthStore } from '../stores/authStore'
+
+interface CmsPageData {
+  slug: string
+  title: string
+  content: string
+  metaDescription?: string
+  fallback?: boolean
+}
 
 export function About() {
+  const [cmsPage, setCmsPage] = useState<CmsPageData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const { user } = useAuthStore()
+
   useEffect(() => {
     window.scrollTo(0, 0)
+    fetchCmsPage()
   }, [])
+
+  const fetchCmsPage = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get('/cms/pages/about')
+      setCmsPage(response.data)
+    } catch (err) {
+      console.error('Failed to fetch CMS page:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const stats = [
     { label: 'Events Hosted', value: '1,000+' },
@@ -53,8 +81,64 @@ export function About() {
     { name: 'Taylor Reed', role: 'Marketing Director', image: '🚀' },
   ]
 
+  // Show loading spinner while fetching
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-warmgray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-coral-600" />
+      </div>
+    )
+  }
+
+  // If CMS content exists and is not fallback, render it
+  if (cmsPage && !cmsPage.fallback) {
+    return (
+      <div className="min-h-screen bg-warmgray-50 py-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="card p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-3xl font-bold text-warmgray-900">{cmsPage.title}</h1>
+              {user?.role === 'ADMIN' && (
+                <Link
+                  to="/admin/content"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-coral-600 bg-coral-50 rounded-lg hover:bg-coral-100 transition-colors"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit in Admin
+                </Link>
+              )}
+            </div>
+            <div 
+              className="prose prose-warmgray max-w-none"
+              dangerouslySetInnerHTML={{ __html: cmsPage.content }}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Fallback: render hardcoded content
   return (
     <div className="min-h-screen bg-warmgray-50">
+      {/* Admin Edit Button - only for fallback content */}
+      {user?.role === 'ADMIN' && (
+        <div className="bg-yellow-50 border-b border-yellow-200 py-3">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <p className="text-sm text-yellow-800">
+              This page is using default content.
+            </p>
+            <Link
+              to="/admin/content"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-coral-600 bg-white rounded-lg hover:bg-coral-50 transition-colors border border-coral-200"
+            >
+              <Edit className="h-4 w-4" />
+              Edit in Admin
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-coral-500 via-coral-600 to-coral-700 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

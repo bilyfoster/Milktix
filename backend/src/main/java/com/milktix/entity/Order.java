@@ -66,6 +66,19 @@ public class Order {
     private LocalDateTime paidAt;
     private LocalDateTime cancelledAt;
 
+    // Refund fields
+    @Enumerated(EnumType.STRING)
+    private RefundStatus refundStatus = RefundStatus.NONE;
+
+    private BigDecimal refundAmount;
+    private String refundReason;
+    private LocalDateTime refundAt;
+    private UUID refundedBy;
+
+    // Cancellation fields
+    private UUID cancelledBy;
+    private String cancelReason;
+
     public enum Status {
         PENDING,
         COMPLETED,
@@ -79,6 +92,12 @@ public class Order {
         PAID,
         FAILED,
         REFUNDED
+    }
+
+    public enum RefundStatus {
+        NONE,
+        PARTIAL,
+        FULL
     }
 
     // Constructors
@@ -150,6 +169,29 @@ public class Order {
     public LocalDateTime getCancelledAt() { return cancelledAt; }
     public void setCancelledAt(LocalDateTime cancelledAt) { this.cancelledAt = cancelledAt; }
 
+    // Refund getters and setters
+    public RefundStatus getRefundStatus() { return refundStatus; }
+    public void setRefundStatus(RefundStatus refundStatus) { this.refundStatus = refundStatus; }
+
+    public BigDecimal getRefundAmount() { return refundAmount; }
+    public void setRefundAmount(BigDecimal refundAmount) { this.refundAmount = refundAmount; }
+
+    public String getRefundReason() { return refundReason; }
+    public void setRefundReason(String refundReason) { this.refundReason = refundReason; }
+
+    public LocalDateTime getRefundAt() { return refundAt; }
+    public void setRefundAt(LocalDateTime refundAt) { this.refundAt = refundAt; }
+
+    public UUID getRefundedBy() { return refundedBy; }
+    public void setRefundedBy(UUID refundedBy) { this.refundedBy = refundedBy; }
+
+    // Cancellation getters and setters
+    public UUID getCancelledBy() { return cancelledBy; }
+    public void setCancelledBy(UUID cancelledBy) { this.cancelledBy = cancelledBy; }
+
+    public String getCancelReason() { return cancelReason; }
+    public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
+
     // Helper methods
     public boolean isPaid() {
         return paymentStatus == PaymentStatus.PAID;
@@ -163,6 +205,14 @@ public class Order {
         return status == Status.COMPLETED;
     }
 
+    public boolean isRefunded() {
+        return refundStatus == RefundStatus.FULL || refundStatus == RefundStatus.PARTIAL;
+    }
+
+    public boolean isCancelled() {
+        return status == Status.CANCELLED;
+    }
+
     public void markAsPaid() {
         this.paymentStatus = PaymentStatus.PAID;
         this.status = Status.COMPLETED;
@@ -171,5 +221,21 @@ public class Order {
 
     public void markAsFailed() {
         this.paymentStatus = PaymentStatus.FAILED;
+    }
+
+    public void markAsRefunded(BigDecimal amount, UUID adminId) {
+        this.refundAmount = amount;
+        this.refundStatus = amount.compareTo(this.totalAmount) == 0 ? RefundStatus.FULL : RefundStatus.PARTIAL;
+        this.refundAt = LocalDateTime.now();
+        this.refundedBy = adminId;
+        this.status = Status.REFUNDED;
+        this.paymentStatus = PaymentStatus.REFUNDED;
+    }
+
+    public void markAsCancelled(String reason, UUID adminId) {
+        this.status = Status.CANCELLED;
+        this.cancelReason = reason;
+        this.cancelledAt = LocalDateTime.now();
+        this.cancelledBy = adminId;
     }
 }

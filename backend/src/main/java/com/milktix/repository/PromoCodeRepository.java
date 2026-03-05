@@ -15,4 +15,7 @@ public interface PromoCodeRepository extends JpaRepository<PromoCode, UUID> {
     List<PromoCode> findByIsActiveTrue();
     List<PromoCode> findByEventId(UUID eventId);
     List<PromoCode> findByScopeAndIsActiveTrue(PromoCode.Scope scope);
+    List<PromoCode> findByHostId(UUID hostId);
+    List<PromoCode> findByHostIdAndIsActiveTrue(UUID hostId);
+    List<PromoCode> findByScopeAndHostId(PromoCode.Scope scope, UUID hostId);
 }

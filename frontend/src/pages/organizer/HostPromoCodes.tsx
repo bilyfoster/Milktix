@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Tag, Plus, Edit2, Trash2, Copy, Check, Percent, DollarSign, Gift, Loader2, X, Filter, Globe, User, Calendar } from 'lucide-react'
-import api from '../../utils/api'
+import { Tag, Plus, Edit2, Trash2, Copy, Check, Percent, DollarSign, Gift, Loader2, X, User, TrendingUp, BarChart3 } from 'lucide-react'
+import { promoCodesApi } from '../../utils/api'
 
 interface PromoCode {
   id: string
@@ -8,7 +8,7 @@ interface PromoCode {
   description: string
   discountType: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'COMP'
   discountValue: number
-  scope: 'GLOBAL' | 'EVENT_SPECIFIC' | 'HOST_SPECIFIC'
+  scope: 'HOST_SPECIFIC'
   maxUses: number | null
   currentUses: number
   maxUsesPerUser: number
@@ -18,36 +18,36 @@ interface PromoCode {
   endDate: string | null
   isActive: boolean
   createdAt: string
-  hostId?: string
-  host?: {
-    id: string
-    name: string
-  }
-  eventId?: string
-  event?: {
-    id: string
-    title: string
-  }
+  hostId: string
 }
 
-type ScopeFilter = 'ALL' | 'GLOBAL' | 'EVENT_SPECIFIC' | 'HOST_SPECIFIC'
+interface PromoCodeUsage {
+  totalDiscount: number
+  recentUses: Array<{
+    id: string
+    usedAt: string
+    orderId: string
+    discountAmount: number
+  }>
+}
 
-export function PromoCodes() {
+export function HostPromoCodes() {
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
-  const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('ALL')
   const [editingCode, setEditingCode] = useState<PromoCode | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [usageStats, setUsageStats] = useState<Record<string, PromoCodeUsage>>({})
+  const [actionError, setActionError] = useState('')
+
   const [formData, setFormData] = useState({
     code: '',
     description: '',
     discountType: 'PERCENTAGE',
     discountValue: 10,
-    scope: 'GLOBAL',
     maxUses: '',
     maxUsesPerUser: 1,
     minTickets: 1,
@@ -63,10 +63,24 @@ export function PromoCodes() {
 
   const fetchPromoCodes = async () => {
     try {
-      const response = await api.get('/promo-codes')
+      setLoading(true)
+      const response = await promoCodesApi.getHostPromoCodes()
       setPromoCodes(response.data)
+      
+      // Fetch usage stats for each code
+      const stats: Record<string, PromoCodeUsage> = {}
+      for (const code of response.data) {
+        try {
+          const usageRes = await promoCodesApi.getPromoCodeUsage(code.id)
+          stats[code.id] = usageRes.data
+        } catch (err) {
+          console.error(`Failed to fetch usage for ${code.id}:`, err)
+        }
+      }
+      setUsageStats(stats)
     } catch (error) {
       console.error('Failed to fetch promo codes:', error)
+      setActionError('Failed to load promo codes')
     } finally {
       setLoading(false)
     }
@@ -75,19 +89,21 @@ export function PromoCodes() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setActionError('')
     try {
       const payload = {
         ...formData,
+        scope: 'HOST_SPECIFIC',
         discountValue: Number(formData.discountValue),
         maxUses: formData.maxUses ? Number(formData.maxUses) : null,
         minAmount: formData.minAmount ? Number(formData.minAmount) : null
       }
-      await api.post('/promo-codes', payload)
+      await promoCodesApi.createHostPromoCode(payload)
       fetchPromoCodes()
       setShowForm(false)
       resetForm()
     } catch (error: any) {
-      alert(error.response?.data || 'Failed to create promo code')
+      setActionError(error.response?.data || 'Failed to create promo code')
     } finally {
       setIsSubmitting(false)
     }
@@ -97,6 +113,7 @@ export function PromoCodes() {
     e.preventDefault()
     if (!editingCode) return
     setIsSubmitting(true)
+    setActionError('')
     try {
       const payload = {
         ...formData,
@@ -104,12 +121,12 @@ export function PromoCodes() {
         maxUses: formData.maxUses ? Number(formData.maxUses) : null,
         minAmount: formData.minAmount ? Number(formData.minAmount) : null
       }
-      await api.put(`/promo-codes/${editingCode.id}`, payload)
+      await promoCodesApi.updatePromoCode(editingCode.id, payload)
       fetchPromoCodes()
       setEditingCode(null)
       resetForm()
     } catch (error: any) {
-      alert(error.response?.data || 'Failed to update promo code')
+      setActionError(error.response?.data || 'Failed to update promo code')
     } finally {
       setIsSubmitting(false)
     }
@@ -118,12 +135,13 @@ export function PromoCodes() {
   const handleDelete = async () => {
     if (!showDeleteConfirm) return
     setIsDeleting(true)
+    setActionError('')
     try {
-      await api.delete(`/promo-codes/${showDeleteConfirm}`)
+      await promoCodesApi.deletePromoCode(showDeleteConfirm)
       fetchPromoCodes()
       setShowDeleteConfirm(null)
     } catch (error: any) {
-      alert(error.response?.data || 'Failed to delete promo code')
+      setActionError(error.response?.data || 'Failed to delete promo code')
     } finally {
       setIsDeleting(false)
     }
@@ -135,7 +153,6 @@ export function PromoCodes() {
       description: '',
       discountType: 'PERCENTAGE',
       discountValue: 10,
-      scope: 'GLOBAL',
       maxUses: '',
       maxUsesPerUser: 1,
       minTickets: 1,
@@ -144,6 +161,7 @@ export function PromoCodes() {
       endDate: '',
       isActive: true
     })
+    setActionError('')
   }
 
   const openEditModal = (code: PromoCode) => {
@@ -153,7 +171,6 @@ export function PromoCodes() {
       description: code.description || '',
       discountType: code.discountType,
       discountValue: code.discountValue,
-      scope: code.scope,
       maxUses: code.maxUses?.toString() || '',
       maxUsesPerUser: code.maxUsesPerUser || 1,
       minTickets: code.minTickets || 1,
@@ -188,38 +205,16 @@ export function PromoCodes() {
     }
   }
 
-  const getScopeIcon = (scope: string) => {
-    switch (scope) {
-      case 'GLOBAL': return <Globe className="h-3.5 w-3.5" />
-      case 'HOST_SPECIFIC': return <User className="h-3.5 w-3.5" />
-      case 'EVENT_SPECIFIC': return <Calendar className="h-3.5 w-3.5" />
-      default: return null
-    }
+  const getUsagePercentage = (code: PromoCode) => {
+    if (!code.maxUses) return code.currentUses > 0 ? 100 : 0
+    return Math.min(100, (code.currentUses / code.maxUses) * 100)
   }
 
-  const getScopeLabel = (scope: string) => {
-    switch (scope) {
-      case 'GLOBAL': return 'Global'
-      case 'HOST_SPECIFIC': return 'Host'
-      case 'EVENT_SPECIFIC': return 'Event'
-      default: return scope
-    }
+  const getTotalUses = () => promoCodes.reduce((sum, code) => sum + code.currentUses, 0)
+  const getTotalDiscountGiven = () => {
+    return Object.values(usageStats).reduce((sum, stat) => sum + (stat?.totalDiscount || 0), 0)
   }
-
-  const getScopeBadgeClass = (scope: string) => {
-    switch (scope) {
-      case 'GLOBAL': return 'bg-blue-100 text-blue-700'
-      case 'HOST_SPECIFIC': return 'bg-violet-100 text-violet-700'
-      case 'EVENT_SPECIFIC': return 'bg-amber-100 text-amber-700'
-      default: return 'bg-warmgray-100 text-warmgray-700'
-    }
-  }
-
-  const filteredPromoCodes = promoCodes.filter(code => 
-    scopeFilter === 'ALL' || code.scope === scopeFilter
-  )
-
-  const showHostColumn = scopeFilter === 'ALL' || scopeFilter === 'HOST_SPECIFIC'
+  const getActiveCodes = () => promoCodes.filter(code => code.isActive).length
 
   if (loading) {
     return (
@@ -230,12 +225,12 @@ export function PromoCodes() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-warmgray-900">Promo Codes</h1>
-          <p className="text-warmgray-600">Create and manage discount codes</p>
+          <h1 className="text-2xl font-bold text-warmgray-900">My Promo Codes</h1>
+          <p className="text-warmgray-600">Create and manage promo codes for your events</p>
         </div>
         <button
           onClick={() => {
@@ -248,31 +243,53 @@ export function PromoCodes() {
         </button>
       </div>
 
-      {/* Scope Filter */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Filter className="h-4 w-4 text-warmgray-400" />
-        {(['ALL', 'GLOBAL', 'EVENT_SPECIFIC', 'HOST_SPECIFIC'] as ScopeFilter[]).map((scope) => (
-          <button
-            key={scope}
-            onClick={() => setScopeFilter(scope)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              scopeFilter === scope
-                ? 'bg-coral-600 text-white'
-                : 'bg-white text-warmgray-600 hover:bg-warmgray-100 border border-warmgray-200'
-            }`}
-          >
-            {scope === 'ALL' ? 'All Codes' : getScopeLabel(scope)}
-          </button>
-        ))}
-        <span className="text-sm text-warmgray-500 ml-2">
-          {filteredPromoCodes.length} of {promoCodes.length} codes
-        </span>
-      </div>
+      {/* Error Display */}
+      {actionError && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+          {actionError}
+        </div>
+      )}
+
+      {/* Stats Overview */}
+      {promoCodes.length > 0 && (
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-white p-4 rounded-xl border border-warmgray-200">
+            <div className="flex items-center gap-2 text-warmgray-500 mb-1">
+              <Tag className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase">Total Codes</span>
+            </div>
+            <p className="text-2xl font-bold text-warmgray-900">{promoCodes.length}</p>
+            <p className="text-xs text-warmgray-500">{getActiveCodes()} active</p>
+          </div>
+          <div className="bg-white p-4 rounded-xl border border-warmgray-200">
+            <div className="flex items-center gap-2 text-warmgray-500 mb-1">
+              <TrendingUp className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase">Total Uses</span>
+            </div>
+            <p className="text-2xl font-bold text-coral-600">{getTotalUses()}</p>
+            <p className="text-xs text-warmgray-500">redemptions</p>
+          </div>
+          <div className="bg-white p-4 rounded-xl border border-warmgray-200">
+            <div className="flex items-center gap-2 text-warmgray-500 mb-1">
+              <DollarSign className="h-4 w-4" />
+              <span className="text-xs font-medium uppercase">Total Discount</span>
+            </div>
+            <p className="text-2xl font-bold text-green-600">${getTotalDiscountGiven().toFixed(0)}</p>
+            <p className="text-xs text-warmgray-500">given to customers</p>
+          </div>
+        </div>
+      )}
 
       {/* Create Form */}
       {showForm && (
         <div className="card p-6">
-          <h2 className="text-lg font-semibold mb-4">Create Promo Code</h2>
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <User className="h-5 w-5 text-violet-600" />
+            Create Host-Specific Promo Code
+          </h2>
+          <p className="text-sm text-warmgray-600 mb-4">
+            This code will only be valid for events hosted by you.
+          </p>
           <PromoCodeForm 
             formData={formData}
             setFormData={setFormData}
@@ -285,131 +302,136 @@ export function PromoCodes() {
       )}
 
       {/* Promo Codes List */}
-      <div className="card overflow-hidden">
-        <table className="min-w-full divide-y divide-warmgray-200">
-          <thead className="bg-warmgray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-warmgray-500 uppercase">Code</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-warmgray-500 uppercase">Discount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-warmgray-500 uppercase">Scope</th>
-              {showHostColumn && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-warmgray-500 uppercase">Host</th>
-              )}
-              <th className="px-6 py-3 text-left text-xs font-medium text-warmgray-500 uppercase">Usage</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-warmgray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-warmgray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-warmgray-200">
-            {filteredPromoCodes.map((code) => (
-              <tr key={code.id} className="hover:bg-warmgray-50">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-semibold text-coral-600">{code.code}</span>
-                    <button
-                      onClick={() => copyCode(code.code)}
-                      className="text-warmgray-400 hover:text-coral-600"
-                      title="Copy code"
-                    >
-                      {copiedCode === code.code ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {code.description && (
-                    <p className="text-xs text-warmgray-500 mt-1">{code.description}</p>
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    {getDiscountIcon(code.discountType)}
-                    <span className="font-medium">{getDiscountLabel(code)}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getScopeBadgeClass(code.scope)}`}>
-                    {getScopeIcon(code.scope)}
-                    {getScopeLabel(code.scope)}
-                  </span>
-                </td>
-                {showHostColumn && (
-                  <td className="px-6 py-4">
-                    {code.host ? (
-                      <span className="text-sm text-warmgray-700">{code.host.name}</span>
-                    ) : (
-                      <span className="text-sm text-warmgray-400">-</span>
-                    )}
-                  </td>
-                )}
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="font-medium">{code.currentUses}</span>
-                        <span className="text-warmgray-500">/ {code.maxUses || '∞'}</span>
-                      </div>
-                      <div className="w-20 h-1.5 bg-warmgray-200 rounded-full">
-                        <div 
-                          className="h-full bg-coral-500 rounded-full"
-                          style={{ 
-                            width: code.maxUses 
-                              ? `${Math.min(100, (code.currentUses / code.maxUses) * 100)}%` 
-                              : code.currentUses > 0 ? '100%' : '0%'
-                          }}
-                        />
-                      </div>
+      {promoCodes.length === 0 ? (
+        <div className="card p-12 text-center">
+          <Tag className="h-16 w-16 text-warmgray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-warmgray-900">No promo codes yet</h3>
+          <p className="text-warmgray-600 mt-1 mb-6">
+            Create your first promo code to start offering discounts.
+          </p>
+          <button 
+            onClick={() => setShowForm(true)}
+            className="btn-primary"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Your First Code
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {promoCodes.map((code) => (
+            <div 
+              key={code.id} 
+              className="card p-6 hover:shadow-lg transition-all"
+            >
+              <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+                {/* Code Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-lg text-coral-600">{code.code}</span>
+                      <button
+                        onClick={() => copyCode(code.code)}
+                        className="text-warmgray-400 hover:text-coral-600 p-1 rounded"
+                        title="Copy code"
+                      >
+                        {copiedCode === code.code ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                      </button>
                     </div>
-                    <span className="text-xs text-warmgray-500">
-                      {code.maxUsesPerUser > 1 ? `${code.maxUsesPerUser}/user` : ''}
+                    <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                      code.isActive 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-warmgray-100 text-warmgray-800'
+                    }`}>
+                      {code.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-700">
+                      <User className="h-3 w-3" />
+                      Host Only
                     </span>
                   </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                    code.isActive 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-warmgray-100 text-warmgray-800'
-                  }`}>
-                    {code.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button 
+                  {code.description && (
+                    <p className="text-sm text-warmgray-600 mb-2">{code.description}</p>
+                  )}
+                  <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-1.5 text-warmgray-700">
+                      {getDiscountIcon(code.discountType)}
+                      <span className="font-medium">{getDiscountLabel(code)}</span>
+                    </div>
+                    {(code.startDate || code.endDate) && (
+                      <span className="text-warmgray-500">
+                        {code.startDate && new Date(code.startDate) > new Date() && 'Starts '}
+                        {code.endDate && new Date(code.endDate) < new Date() ? 'Expired' : 
+                         code.startDate && new Date(code.startDate) > new Date() ? new Date(code.startDate).toLocaleDateString() :
+                         code.endDate ? `Until ${new Date(code.endDate).toLocaleDateString()}` : ''}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Usage Stats */}
+                <div className="flex items-center gap-6">
+                  <div className="text-center">
+                    <div className="flex items-center gap-2 mb-1">
+                      <BarChart3 className="h-4 w-4 text-warmgray-400" />
+                      <span className="text-xs text-warmgray-500 uppercase">Usage</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-24">
+                        <div className="flex items-center justify-between text-sm mb-1">
+                          <span className="font-bold text-warmgray-900">{code.currentUses}</span>
+                          <span className="text-warmgray-500">/ {code.maxUses || '∞'}</span>
+                        </div>
+                        <div className="h-2 bg-warmgray-200 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full ${
+                              getUsagePercentage(code) >= 90 ? 'bg-red-500' : 'bg-coral-500'
+                            }`}
+                            style={{ width: `${getUsagePercentage(code)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {code.maxUsesPerUser > 1 && (
+                      <p className="text-xs text-warmgray-500 mt-1">{code.maxUsesPerUser} per user</p>
+                    )}
+                  </div>
+
+                  {usageStats[code.id] && usageStats[code.id].totalDiscount > 0 && (
+                    <div className="text-center hidden sm:block">
+                      <div className="flex items-center gap-2 mb-1">
+                        <DollarSign className="h-4 w-4 text-warmgray-400" />
+                        <span className="text-xs text-warmgray-500 uppercase">Total Discount</span>
+                      </div>
+                      <p className="text-xl font-bold text-green-600">
+                        ${usageStats[code.id].totalDiscount.toFixed(0)}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1">
+                    <button
                       onClick={() => openEditModal(code)}
-                      className="p-2 text-coral-600 hover:text-coral-800 hover:bg-coral-50 rounded-lg transition-colors"
+                      className="btn-ghost text-sm py-2 px-3"
                       title="Edit"
                     >
                       <Edit2 className="h-4 w-4" />
                     </button>
-                    <button 
+                    <button
                       onClick={() => setShowDeleteConfirm(code.id)}
-                      className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                      className="btn-ghost text-sm py-2 px-3 text-red-500 hover:text-red-600 hover:bg-red-50"
                       title="Delete"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
-                </td>
-              </tr>
-            ))}
-            {filteredPromoCodes.length === 0 && (
-              <tr>
-                <td colSpan={showHostColumn ? 7 : 6} className="px-6 py-12 text-center text-warmgray-500">
-                  <Tag className="h-12 w-12 mx-auto mb-4 text-warmgray-300" />
-                  <p>No promo codes found</p>
-                  {scopeFilter !== 'ALL' && (
-                    <button 
-                      onClick={() => setScopeFilter('ALL')}
-                      className="text-coral-600 hover:text-coral-700 text-sm mt-2"
-                    >
-                      Clear filter
-                    </button>
-                  )}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Edit Modal */}
       {editingCode && (
@@ -425,9 +447,16 @@ export function PromoCodes() {
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <p className="text-warmgray-600 text-sm mt-1">Editing: <span className="font-mono font-medium text-coral-600">{editingCode.code}</span></p>
+              <p className="text-warmgray-600 text-sm mt-1">
+                Editing: <span className="font-mono font-medium text-coral-600">{editingCode.code}</span>
+              </p>
             </div>
             <div className="p-6">
+              {actionError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {actionError}
+                </div>
+              )}
               <PromoCodeForm 
                 formData={formData}
                 setFormData={setFormData}
@@ -488,7 +517,6 @@ interface PromoCodeFormProps {
     description: string
     discountType: string
     discountValue: number
-    scope: string
     maxUses: string
     maxUsesPerUser: number
     minTickets: number
@@ -518,6 +546,7 @@ function PromoCodeForm({ formData, setFormData, onSubmit, onCancel, isSubmitting
             value={formData.code}
             onChange={e => setFormData({...formData, code: e.target.value.toUpperCase()})}
           />
+          <p className="text-xs text-warmgray-500 mt-1">Customers will enter this code at checkout</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-warmgray-700 mb-1">Discount Type *</label>
@@ -538,7 +567,7 @@ function PromoCodeForm({ formData, setFormData, onSubmit, onCancel, isSubmitting
         <input
           type="text"
           className="input"
-          placeholder="Summer special discount"
+          placeholder="Summer special discount for your events"
           value={formData.description}
           onChange={e => setFormData({...formData, description: e.target.value})}
         />
@@ -593,6 +622,7 @@ function PromoCodeForm({ formData, setFormData, onSubmit, onCancel, isSubmitting
             value={formData.startDate}
             onChange={e => setFormData({...formData, startDate: e.target.value})}
           />
+          <p className="text-xs text-warmgray-500 mt-1">When the code becomes active (optional)</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-warmgray-700 mb-1">End Date</label>
@@ -602,6 +632,7 @@ function PromoCodeForm({ formData, setFormData, onSubmit, onCancel, isSubmitting
             value={formData.endDate}
             onChange={e => setFormData({...formData, endDate: e.target.value})}
           />
+          <p className="text-xs text-warmgray-500 mt-1">When the code expires (optional)</p>
         </div>
       </div>
 

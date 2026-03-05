@@ -2,6 +2,7 @@ package com.milktix.service;
 
 import com.milktix.dto.PromoCodeValidationResult;
 import com.milktix.entity.*;
+import com.milktix.repository.HostRepository;
 import com.milktix.repository.PromoCodeRepository;
 import com.milktix.repository.PromoCodeUsageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ public class PromoCodeService {
 
     @Autowired
     private PromoCodeUsageRepository usageRepository;
+
+    @Autowired
+    private HostRepository hostRepository;
 
     @Transactional(readOnly = true)
     public PromoCodeValidationResult validatePromoCode(String code, UUID eventId, UUID userId, 
@@ -69,6 +73,20 @@ public class PromoCodeService {
             if (promo.getEvent() == null || !promo.getEvent().getId().equals(eventId)) {
                 return PromoCodeValidationResult.invalid("This promo code is not valid for this event");
             }
+        }
+        
+        // Check host scope
+        if (promo.getScope() == PromoCode.Scope.HOST_SPECIFIC) {
+            if (promo.getHost() == null) {
+                return PromoCodeValidationResult.invalid("This promo code is not properly configured");
+            }
+            // For host-specific codes, we need to check if the event belongs to the host
+            // This requires the eventId to be provided
+            if (eventId == null) {
+                return PromoCodeValidationResult.invalid("Event information is required for this promo code");
+            }
+            // Note: The actual host validation should be done by the caller who has access to EventRepository
+            // to check if the event belongs to the promo code's host
         }
         
         // Check minimum tickets
@@ -200,5 +218,69 @@ public class PromoCodeService {
     @Transactional(readOnly = true)
     public List<PromoCodeUsage> getUsageHistory(UUID promoCodeId) {
         return usageRepository.findByPromoCodeId(promoCodeId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PromoCode> getPromoCodesByHost(UUID hostId) {
+        return promoCodeRepository.findByHostId(hostId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PromoCode> getActivePromoCodesByHost(UUID hostId) {
+        return promoCodeRepository.findByHostIdAndIsActiveTrue(hostId);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Host> getHostByUserId(UUID userId) {
+        return hostRepository.findByUserId(userId);
+    }
+
+    @Transactional
+    public PromoCode createHostPromoCode(PromoCode promoCode, UUID createdById, UUID hostId) {
+        // Validate that the user is the host's user
+        Host host = hostRepository.findById(hostId)
+            .orElseThrow(() -> new IllegalArgumentException("Host not found"));
+        
+        if (!host.getUser().getId().equals(createdById)) {
+            throw new IllegalArgumentException("You can only create promo codes for your own host");
+        }
+        
+        // Set the host and scope
+        promoCode.setHost(host);
+        promoCode.setScope(PromoCode.Scope.HOST_SPECIFIC);
+        
+        // Use the existing createPromoCode method for the rest
+        return createPromoCode(promoCode, createdById);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PromoCode> getAllPromoCodes(UUID hostId) {
+        if (hostId != null) {
+            return promoCodeRepository.findByHostId(hostId);
+        }
+        return promoCodeRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean canAccessPromoCode(UUID promoCodeId, UUID userId) {
+        Optional<PromoCode> promoOpt = promoCodeRepository.findById(promoCodeId);
+        if (promoOpt.isEmpty()) {
+            return false;
+        }
+        
+        PromoCode promo = promoOpt.get();
+        
+        // Admin can access all
+        // Organizer can only access their host's codes
+        if (promo.getScope() == PromoCode.Scope.HOST_SPECIFIC) {
+            if (promo.getHost() == null) {
+                return false;
+            }
+            return promo.getHost().getUser().getId().equals(userId);
+        }
+        
+        // For GLOBAL and EVENT_SPECIFIC, only admin should access
+        // This will be checked by @PreAuthorize in controller
+        return true;
     }
 }

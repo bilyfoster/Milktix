@@ -1,10 +1,38 @@
-import { useEffect } from 'react'
-import { Shield, Lock, Eye, Database, Share2, Cookie } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Shield, Lock, Eye, Database, Share2, Cookie, Loader2, Edit } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import api from '../utils/api'
+import { useAuthStore } from '../stores/authStore'
+
+interface CmsPageData {
+  slug: string
+  title: string
+  content: string
+  metaDescription?: string
+  fallback?: boolean
+}
 
 export function Privacy() {
+  const [cmsPage, setCmsPage] = useState<CmsPageData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const { user } = useAuthStore()
+
   useEffect(() => {
     window.scrollTo(0, 0)
+    fetchCmsPage()
   }, [])
+
+  const fetchCmsPage = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get('/cms/pages/privacy')
+      setCmsPage(response.data)
+    } catch (err) {
+      console.error('Failed to fetch CMS page:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const sections = [
     {
@@ -55,9 +83,65 @@ export function Privacy() {
     }
   ]
 
+  // Show loading spinner while fetching
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-warmgray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-coral-600" />
+      </div>
+    )
+  }
+
+  // If CMS content exists and is not fallback, render it
+  if (cmsPage && !cmsPage.fallback) {
+    return (
+      <div className="min-h-screen bg-warmgray-50 py-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="card p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-3xl font-bold text-warmgray-900">{cmsPage.title}</h1>
+              {user?.role === 'ADMIN' && (
+                <Link
+                  to="/admin/content"
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-coral-600 bg-coral-50 rounded-lg hover:bg-coral-100 transition-colors"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit in Admin
+                </Link>
+              )}
+            </div>
+            <div 
+              className="prose prose-warmgray max-w-none"
+              dangerouslySetInnerHTML={{ __html: cmsPage.content }}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Fallback: render hardcoded content
   return (
     <div className="min-h-screen bg-warmgray-50 py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Admin Edit Button - only for fallback content */}
+        {user?.role === 'ADMIN' && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-yellow-800">
+                This page is using default content.
+              </p>
+              <Link
+                to="/admin/content"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-coral-600 bg-white rounded-lg hover:bg-coral-50 transition-colors border border-coral-200"
+              >
+                <Edit className="h-4 w-4" />
+                Edit in Admin
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-warmgray-900 mb-4">Privacy Policy</h1>

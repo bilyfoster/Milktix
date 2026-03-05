@@ -28,6 +28,12 @@ import { ResetPassword } from './pages/ResetPassword'
 import { CmsPage } from './pages/CmsPage'
 import { CmsPages } from './pages/admin/CmsPages'
 import { PromoCodes } from './pages/admin/PromoCodes'
+import { BlogList } from './pages/BlogList'
+import { BlogPost } from './pages/BlogPost'
+import { BlogAdmin } from './pages/admin/BlogAdmin'
+import { BlogEditor } from './pages/admin/BlogEditor'
+import { HostPromoCodes } from './pages/organizer/HostPromoCodes'
+import { AdminOrders } from './pages/admin/AdminOrders'
 
 // Organizer Dashboard Pages
 import { OrganizerDashboard } from './pages/organizer/Dashboard'
@@ -61,16 +67,7 @@ function App() {
         <Route path="register" element={<Register />} />
         <Route path="become-organizer" element={<BecomeOrganizer />} />
         <Route path="organizer-request-status" element={<OrganizerRequestStatus />} />
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route path="events" element={<AdminEventsV2 />} />
-          <Route path="users" element={<AdminUsers />} />
-          <Route path="organizer-requests" element={<AdminOrganizerRequests />} />
-          <Route path="hosts" element={<AdminHosts />} />
-          <Route path="locations" element={<AdminLocations />} />
-          <Route path="reports" element={<div className="card p-12 text-center"><h2 className="text-xl font-semibold text-warmgray-900">Reports</h2><p className="text-warmgray-600 mt-2">Reports dashboard coming soon.</p></div>} />
-          <Route path="content" element={<CmsPages />} />
-          <Route path="promo-codes" element={<PromoCodes />} />
-        </Route>
+
         <Route path="hosts/:id" element={<HostProfile />} />
         <Route path="locations/:id" element={<LocationPage />} />
         <Route path="order-success" element={<OrderSuccess />} />
@@ -81,6 +78,24 @@ function App() {
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password" element={<ResetPassword />} />
         <Route path="page/:slug" element={<CmsPage />} />
+        <Route path="blog" element={<BlogList />} />
+        <Route path="blog/:slug" element={<BlogPost />} />
+      </Route>
+
+      {/* Admin Routes */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route path="events" element={<AdminEventsV2 />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="orders" element={<AdminOrders />} />
+        <Route path="organizer-requests" element={<AdminOrganizerRequests />} />
+        <Route path="hosts" element={<AdminHosts />} />
+        <Route path="locations" element={<AdminLocations />} />
+        <Route path="reports" element={<div className="card p-12 text-center"><h2 className="text-xl font-semibold text-warmgray-900">Reports</h2><p className="text-warmgray-600 mt-2">Reports dashboard coming soon.</p></div>} />
+        <Route path="content" element={<CmsPages />} />
+        <Route path="promo-codes" element={<PromoCodes />} />
+        <Route path="blog" element={<BlogAdmin />} />
+        <Route path="blog/new" element={<BlogEditor />} />
+        <Route path="blog/:id/edit" element={<BlogEditor />} />
       </Route>
 
       {/* Organizer Dashboard Routes - Nested Layout */}
@@ -97,6 +112,7 @@ function App() {
         <Route path="templates/create" element={<CreateTemplate />} />
         <Route path="events/:eventId/checkin" element={<CheckIn />} />
         <Route path="events/:eventId/analytics" element={<Analytics />} />
+        <Route path="promo-codes" element={<HostPromoCodes />} />
       </Route>
     </Routes>
   )

@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Calendar, User, Menu, X, Ticket, Plus, LogOut, Building2, Shield } from 'lucide-react'
+import { Calendar, User, Menu, X, Ticket, Plus, LogOut, Building2, Shield, BookOpen } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '../stores/authStore'
 import { getVersionString } from '../version'
@@ -54,6 +54,17 @@ export function Layout() {
                 }`}
               >
                 Events
+              </Link>
+              <Link 
+                to="/blog" 
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  isActive('/blog') 
+                    ? 'text-coral-600 bg-coral-50' 
+                    : 'text-warmgray-600 hover:text-coral-600 hover:bg-warmgray-100'
+                }`}
+              >
+                <BookOpen className="h-4 w-4 inline mr-1.5" />
+                Blog
               </Link>
             </nav>
             
@@ -163,6 +174,18 @@ export function Layout() {
             >
               <Ticket className="h-5 w-5" />
               Events
+            </Link>
+            <Link
+              to="/blog"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
+                isActive('/blog') 
+                  ? 'text-coral-600 bg-coral-50' 
+                  : 'text-warmgray-700 hover:bg-warmgray-100'
+              }`}
+            >
+              <BookOpen className="h-5 w-5" />
+              Blog
             </Link>
             <div className="pt-2 border-t border-warmgray-100 mt-2">
               {isAuthenticated ? (
