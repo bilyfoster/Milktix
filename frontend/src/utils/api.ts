@@ -81,6 +81,15 @@ export const organizerRequestApi = {
   getPendingCount: () => api.get('/organizer-requests/pending-count'),
 };
 
+// Event Templates API
+export const templatesApi = {
+  getMyTemplates: () => api.get('/templates'),
+  getById: (id: string) => api.get(`/templates/${id}`),
+  create: (data: any) => api.post('/templates', data),
+  generateEvents: (templateId: string, generateUpTo: string) => 
+    api.post(`/templates/${templateId}/generate?generateUpTo=${generateUpTo}`),
+};
+
 // Hosts API
 export const hostsApi = {
   getAll: () => api.get('/hosts'),

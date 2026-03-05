@@ -21,6 +21,8 @@ import { Orders } from './pages/organizer/Orders'
 import { OrderDetail } from './pages/organizer/OrderDetail'
 import { Hosts } from './pages/organizer/Hosts'
 import { Locations } from './pages/organizer/Locations'
+import { EventTemplates } from './pages/organizer/EventTemplates'
+import { CreateTemplate } from './pages/organizer/CreateTemplate'
 
 function App() {
   return (
@@ -49,6 +51,8 @@ function App() {
         <Route path="orders/:orderId" element={<OrderDetail />} />
         <Route path="hosts" element={<Hosts />} />
         <Route path="locations" element={<Locations />} />
+        <Route path="templates" element={<EventTemplates />} />
+        <Route path="templates/create" element={<CreateTemplate />} />
       </Route>
     </Routes>
   )
