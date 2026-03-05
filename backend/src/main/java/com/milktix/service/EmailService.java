@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 @Service
 public class EmailService {
 
-    @Autowired
+    @Autowired(required = false)
     private JavaMailSender mailSender;
 
     @Autowired
@@ -34,7 +34,7 @@ public class EmailService {
     @Autowired
     private EmailLogRepository emailLogRepository;
 
-    @Value("${spring.mail.username:noreply@milktix.com}")
+    @Value("${milktix.email.from-address:noreply@milktix.com}")
     private String fromEmail;
 
     @Value("${milktix.email.from-name:MilkTix}")
@@ -44,14 +44,21 @@ public class EmailService {
     private boolean emailEnabled;
 
     /**
+     * Check if email service is available
+     */
+    public boolean isEmailAvailable() {
+        return emailEnabled && mailSender != null;
+    }
+
+    /**
      * Send email using template
      */
     @Async
     @Transactional
     public void sendTemplateEmail(String toEmail, String templateName, Map<String, String> variables) {
-        if (!emailEnabled) {
+        if (!isEmailAvailable()) {
             System.out.println("Email disabled. Would send to: " + toEmail + " using template: " + templateName);
-            logEmail(toEmail, templateName, "EMAIL_DISABLED", null, "Email service disabled");
+            logEmail(toEmail, templateName, "EMAIL_DISABLED", null, "Email service disabled (enable with EMAIL_ENABLED=true and configure SMTP)");
             return;
         }
 
@@ -80,9 +87,9 @@ public class EmailService {
     @Async
     @Transactional
     public void sendHtmlEmail(String toEmail, String subject, String htmlContent, String templateName) {
-        if (!emailEnabled) {
+        if (!isEmailAvailable()) {
             System.out.println("Email disabled. Would send to: " + toEmail);
-            logEmail(toEmail, templateName, "EMAIL_DISABLED", null, "Email service disabled");
+            logEmail(toEmail, templateName, "EMAIL_DISABLED", null, "Email service disabled (enable with EMAIL_ENABLED=true and configure SMTP)");
             return;
         }
 
