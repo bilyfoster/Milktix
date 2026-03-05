@@ -64,8 +64,10 @@ public class HostController {
             @RequestBody HostDTO hostDTO,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
         
-        // Check if user already has a host profile
-        if (hostRepository.existsByUserId(userDetails.getId())) {
+        // Check if user already has a host profile (non-admins only)
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin && hostRepository.existsByUserId(userDetails.getId())) {
             return ResponseEntity.badRequest().body("Host profile already exists");
         }
 

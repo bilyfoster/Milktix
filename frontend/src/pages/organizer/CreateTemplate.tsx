@@ -59,13 +59,10 @@ export function CreateTemplate() {
     const loadData = async () => {
       try {
         const [hostsRes, locationsRes] = await Promise.all([
-          hostsApi.getMyHosts(),
+          hostsApi.getAll(),
           locationsApi.getAll()
         ])
-        // Handle case where user has no host profile (returns {hasHost: false})
-        const hostsData = Array.isArray(hostsRes.data) ? hostsRes.data : 
-                         hostsRes.data?.hasHost === false ? [] : [hostsRes.data].filter(Boolean)
-        setHosts(hostsData)
+        setHosts(hostsRes.data || [])
         setLocations(locationsRes.data || [])
       } catch (err) {
         console.error('Failed to load data:', err)
