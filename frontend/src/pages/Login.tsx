@@ -136,7 +136,7 @@ export function Login() {
                 </label>
               </div>
 
-              <Link to="#" className="text-sm font-medium text-coral-600 hover:text-coral-700">
+              <Link to="/forgot-password" className="text-sm font-medium text-coral-600 hover:text-coral-700">
                 Forgot password?
               </Link>
             </div>

@@ -21,6 +21,8 @@ import { About } from './pages/About'
 import { Contact } from './pages/Contact'
 import { Terms } from './pages/Terms'
 import { Privacy } from './pages/Privacy'
+import { ForgotPassword } from './pages/ForgotPassword'
+import { ResetPassword } from './pages/ResetPassword'
 import { CmsPage } from './pages/CmsPage'
 import { CmsPages } from './pages/admin/CmsPages'
 
@@ -64,6 +66,8 @@ function App() {
         <Route path="contact" element={<Contact />} />
         <Route path="terms" element={<Terms />} />
         <Route path="privacy" element={<Privacy />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
+        <Route path="reset-password" element={<ResetPassword />} />
         <Route path="page/:slug" element={<CmsPage />} />
       </Route>
 
