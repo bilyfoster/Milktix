@@ -2,6 +2,7 @@ package com.milktix.dto;
 
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -21,5 +22,10 @@ public record EventCreateRequest(
     String imageUrl,
     List<TicketTypeRequest> ticketTypes,
     UUID hostId,
-    UUID locationId
+    UUID locationId,
+    // Recurrence fields
+    Boolean isRecurring,
+    String recurrencePattern,
+    LocalDate recurrenceEndDate,
+    List<String> recurrenceDaysOfWeek
 ) {}

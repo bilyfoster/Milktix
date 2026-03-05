@@ -11,7 +11,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -94,11 +96,66 @@ public class EventController {
         User organizer = userRepository.findById(userDetails.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        List<EventResponse> createdEvents = new ArrayList<>();
+        
+        // Check if this is a recurring event
+        if (Boolean.TRUE.equals(request.isRecurring()) && request.recurrenceEndDate() != null) {
+            // Generate recurring events
+            LocalDate currentDate = request.startDateTime().toLocalDate();
+            LocalDate endDate = request.recurrenceEndDate();
+            
+            while (!currentDate.isAfter(endDate)) {
+                // Check if we should create an event for this date based on pattern
+                if (shouldCreateEventForDate(currentDate, request)) {
+                    Event event = createSingleEvent(request, organizer, currentDate);
+                    createdEvents.add(mapToEventResponse(event));
+                }
+                currentDate = currentDate.plusDays(1);
+            }
+        } else {
+            // Single event
+            Event event = createSingleEvent(request, organizer, request.startDateTime().toLocalDate());
+            createdEvents.add(mapToEventResponse(event));
+        }
+
+        return ResponseEntity.ok(createdEvents);
+    }
+    
+    private boolean shouldCreateEventForDate(LocalDate date, EventCreateRequest request) {
+        String pattern = request.recurrencePattern();
+        LocalDate startDate = request.startDateTime().toLocalDate();
+        
+        return switch (pattern) {
+            case "DAILY" -> true;
+            case "WEEKLY" -> {
+                // Check if day of week matches selected days
+                String dayName = date.getDayOfWeek().name();
+                List<String> days = request.recurrenceDaysOfWeek();
+                yield days != null && days.contains(dayName);
+            }
+            case "BIWEEKLY" -> {
+                // Every 2 weeks on the same day of week as start date
+                long weeksBetween = java.time.temporal.ChronoUnit.WEEKS.between(startDate, date);
+                yield weeksBetween % 2 == 0 && date.getDayOfWeek().equals(startDate.getDayOfWeek());
+            }
+            case "MONTHLY" -> date.getDayOfMonth() == startDate.getDayOfMonth();
+            default -> date.equals(startDate);
+        };
+    }
+    
+    private Event createSingleEvent(EventCreateRequest request, User organizer, LocalDate date) {
         Event event = new Event();
         event.setTitle(request.title());
         event.setDescription(request.description());
-        event.setStartDateTime(request.startDateTime());
-        event.setEndDateTime(request.endDateTime());
+        
+        // Adjust datetime to the specific date
+        LocalDateTime startDateTime = date.atTime(request.startDateTime().toLocalTime());
+        LocalDateTime endDateTime = request.endDateTime() != null 
+            ? date.atTime(request.endDateTime().toLocalTime())
+            : null;
+            
+        event.setStartDateTime(startDateTime);
+        event.setEndDateTime(endDateTime);
         event.setVenueName(request.venueName());
         event.setVenueAddress(request.venueAddress());
         event.setVenueCity(request.venueCity());
@@ -147,7 +204,7 @@ public class EventController {
             }
         }
 
-        return ResponseEntity.ok(mapToEventResponse(savedEvent));
+        return savedEvent;
     }
 
     // Helper method to map Event to EventResponse

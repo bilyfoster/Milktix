@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, MapPin, Ticket, Plus, X, ChevronRight, Loader2, Search } from 'lucide-react'
+import { Calendar, MapPin, Ticket, Plus, X, ChevronRight, Loader2, Search, Repeat } from 'lucide-react'
 import { eventsApi, hostsApi, locationsApi } from '../../utils/api'
 
 interface TicketType {
@@ -69,6 +69,14 @@ export function CreateEvent() {
     name: '', address: '', city: '', state: '', zipCode: '', description: '', website: '', phone: ''
   })
   const [isCreatingLocation, setIsCreatingLocation] = useState(false)
+
+  // Recurrence state
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [recurrence, setRecurrence] = useState({
+    pattern: 'WEEKLY' as 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY',
+    endDate: '',
+    daysOfWeek: [] as string[],
+  })
 
   // Load hosts and locations from API
   useEffect(() => {
@@ -180,7 +188,14 @@ export function CreateEvent() {
           quantityAvailable: Number(tt.quantityAvailable),
           minPerOrder: Number(tt.minPerOrder),
           maxPerOrder: Number(tt.maxPerOrder)
-        })) : undefined
+        })) : undefined,
+        // Add recurrence data if enabled
+        ...(isRecurring && {
+          isRecurring: true,
+          recurrencePattern: recurrence.pattern,
+          recurrenceEndDate: recurrence.endDate,
+          recurrenceDaysOfWeek: recurrence.daysOfWeek.length > 0 ? recurrence.daysOfWeek : undefined,
+        })
       }
 
       await eventsApi.create(eventData)
@@ -354,6 +369,93 @@ export function CreateEvent() {
               <p className="text-xs text-warmgray-500 mt-1">
                 Enter a URL for your event banner image
               </p>
+            </div>
+
+            {/* Recurrence Section */}
+            <div className="border-t border-warmgray-200 pt-6">
+              <label className="flex items-center gap-3 cursor-pointer mb-4">
+                <input
+                  type="checkbox"
+                  checked={isRecurring}
+                  onChange={(e) => setIsRecurring(e.target.checked)}
+                  className="w-5 h-5 rounded border-warmgray-300 text-coral-600"
+                />
+                <div>
+                  <span className="font-medium text-warmgray-900 flex items-center gap-2">
+                    <Repeat className="h-4 w-4" />
+                    Make this a recurring event
+                  </span>
+                  <p className="text-sm text-warmgray-500">Create multiple instances of this event</p>
+                </div>
+              </label>
+
+              {isRecurring && (
+                <div className="bg-warmgray-50 p-4 rounded-xl space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-warmgray-700 mb-2">
+                      Repeat Pattern
+                    </label>
+                    <select
+                      className="input"
+                      value={recurrence.pattern}
+                      onChange={(e) => setRecurrence({ ...recurrence, pattern: e.target.value as any, daysOfWeek: [] })}
+                    >
+                      <option value="DAILY">Every Day</option>
+                      <option value="WEEKLY">Every Week</option>
+                      <option value="BIWEEKLY">Every 2 Weeks</option>
+                      <option value="MONTHLY">Every Month (same date)</option>
+                    </select>
+                  </div>
+
+                  {recurrence.pattern === 'WEEKLY' && (
+                    <div>
+                      <label className="block text-sm font-medium text-warmgray-700 mb-2">
+                        Repeat on
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                          <button
+                            key={day}
+                            type="button"
+                            onClick={() => {
+                              const dayUpper = day.toUpperCase()
+                              setRecurrence(prev => ({
+                                ...prev,
+                                daysOfWeek: prev.daysOfWeek.includes(dayUpper)
+                                  ? prev.daysOfWeek.filter(d => d !== dayUpper)
+                                  : [...prev.daysOfWeek, dayUpper]
+                              }))
+                            }}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              recurrence.daysOfWeek.includes(day.toUpperCase())
+                                ? 'bg-coral-600 text-white'
+                                : 'bg-white text-warmgray-600 hover:bg-warmgray-100'
+                            }`}
+                          >
+                            {day}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-warmgray-700 mb-2">
+                      Repeat until *
+                    </label>
+                    <input
+                      type="date"
+                      required={isRecurring}
+                      className="input"
+                      value={recurrence.endDate}
+                      onChange={(e) => setRecurrence({ ...recurrence, endDate: e.target.value })}
+                    />
+                    <p className="text-xs text-warmgray-500 mt-1">
+                      Events will be created from {formData.startDate || 'start date'} until this date
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end">
