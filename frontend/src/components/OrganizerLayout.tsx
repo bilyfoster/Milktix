@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Calendar, PlusCircle, MapPin, Users, Ticket, LogOut, ChevronLeft, ShoppingCart, Repeat } from 'lucide-react'
 import { useState } from 'react'
 import { useAuthStore } from '../stores/authStore'
+import { getVersionString } from '../version'
 
 export function OrganizerLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -129,6 +130,18 @@ export function OrganizerLayout() {
           <Outlet />
         </main>
       </div>
+      
+      {/* Footer */}
+      <footer className="bg-white border-t border-warmgray-200 py-4">
+        <div className="container-custom">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 text-sm text-warmgray-500">
+            <p>© 2026 MilkTix. All rights reserved.</p>
+            <span className="text-xs bg-warmgray-100 px-2 py-1 rounded">
+              {getVersionString()}
+            </span>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

@@ -1,7 +1,8 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Users, MapPin, Shield, Building2, ChevronLeft, LogOut, Loader2 } from 'lucide-react'
+import { Users, MapPin, Shield, Building2, ChevronLeft, LogOut, Loader2, Ticket } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { useEffect } from 'react'
+import { getVersionString } from '../version'
 
 const adminLinks = [
   { path: '/admin/organizer-requests', label: 'Organizer Requests', icon: Building2 },
@@ -111,6 +112,24 @@ export function AdminLayout() {
           <Outlet />
         </div>
       </div>
+      
+      {/* Footer */}
+      <footer className="mt-12 pt-8 border-t border-warmgray-200">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg gradient-coral flex items-center justify-center">
+              <Ticket className="h-3 w-3 text-white" />
+            </div>
+            <span className="text-sm font-semibold text-warmgray-700">MilkTix</span>
+          </div>
+          <div className="flex items-center gap-4 text-sm text-warmgray-500">
+            <span>© 2026 MilkTix. All rights reserved.</span>
+            <span className="text-xs bg-warmgray-100 px-2 py-1 rounded">
+              {getVersionString()}
+            </span>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

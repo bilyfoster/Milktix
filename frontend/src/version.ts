@@ -1,7 +1,7 @@
 // Auto-generated version file
 // This file is updated during deployment
 
-export const VERSION = '1.0.7';
+export const VERSION = '1.0.8';
 export const BUILD_DATE = new Date().toISOString().split('T')[0];
 export const GIT_COMMIT = 'v1.0.7';
 
