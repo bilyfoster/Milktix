@@ -1,9 +1,10 @@
 // Auto-generated version file
-// This file is updated during deployment
+// Generated: Thu Mar  5 11:26:32 CET 2026
+// Change VERSION in update-version.sh for releases
 
-export const VERSION = '1.1.0';
-export const BUILD_DATE = new Date().toISOString().split('T')[0];
-export const GIT_COMMIT = 'v1.1.0';
+export const VERSION = '1.1.1';
+export const BUILD_DATE = '2026-03-05';
+export const GIT_COMMIT = 'a38b2e0';
 
 export const getVersionString = () => {
   return `v${VERSION} (${BUILD_DATE})`;

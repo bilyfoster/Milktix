@@ -17,6 +17,10 @@ import { AdminLayout } from './components/AdminLayout'
 import { HostProfile } from './pages/HostProfile'
 import { LocationPage } from './pages/LocationPage'
 import { OrderSuccess } from './pages/OrderSuccess'
+import { About } from './pages/About'
+import { Contact } from './pages/Contact'
+import { Terms } from './pages/Terms'
+import { Privacy } from './pages/Privacy'
 
 // Organizer Dashboard Pages
 import { OrganizerDashboard } from './pages/organizer/Dashboard'
@@ -53,6 +57,10 @@ function App() {
         <Route path="hosts/:id" element={<HostProfile />} />
         <Route path="locations/:id" element={<LocationPage />} />
         <Route path="order-success" element={<OrderSuccess />} />
+        <Route path="about" element={<About />} />
+        <Route path="contact" element={<Contact />} />
+        <Route path="terms" element={<Terms />} />
+        <Route path="privacy" element={<Privacy />} />
       </Route>
 
       {/* Organizer Dashboard Routes - Nested Layout */}
