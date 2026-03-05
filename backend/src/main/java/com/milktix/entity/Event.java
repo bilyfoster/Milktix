@@ -76,6 +76,16 @@ public class Event {
     )
     private Set<Category> categories = new HashSet<>();
 
+    // For recurring events - link to template
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "template_id")
+    private EventTemplate template;
+
+    // For series tracking
+    private UUID seriesId;
+    private Integer seriesInstanceNumber;
+    private Boolean isRecurringInstance = false;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 
@@ -161,6 +171,18 @@ public class Event {
 
     public Set<Category> getCategories() { return categories; }
     public void setCategories(Set<Category> categories) { this.categories = categories; }
+
+    public EventTemplate getTemplate() { return template; }
+    public void setTemplate(EventTemplate template) { this.template = template; }
+
+    public UUID getSeriesId() { return seriesId; }
+    public void setSeriesId(UUID seriesId) { this.seriesId = seriesId; }
+
+    public Integer getSeriesInstanceNumber() { return seriesInstanceNumber; }
+    public void setSeriesInstanceNumber(Integer seriesInstanceNumber) { this.seriesInstanceNumber = seriesInstanceNumber; }
+
+    public Boolean getIsRecurringInstance() { return isRecurringInstance; }
+    public void setIsRecurringInstance(Boolean isRecurringInstance) { this.isRecurringInstance = isRecurringInstance; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
