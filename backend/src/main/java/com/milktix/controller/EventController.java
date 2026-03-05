@@ -169,7 +169,8 @@ public class EventController {
                         event.getLocation().getLongitude(),
                         event.getLocation().getImageUrl(),
                         event.getLocation().getWebsite(),
-                        event.getLocation().getPhone()
+                        event.getLocation().getPhone(),
+                        event.getLocation().getCapacity()
                 ) : null;
         
         return new EventResponse(

@@ -120,36 +120,35 @@ export function AdminOrganizerRequests() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-coral-600" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-[calc(100vh-200px)] py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-heading-xl font-bold text-warmgray-900">Organizer Requests</h1>
-          <p className="mt-2 text-warmgray-600">
-            Review and manage organizer applications
-            {pendingCount > 0 && (
-              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-coral-100 text-coral-800">
-                {pendingCount} pending
-              </span>
-            )}
-          </p>
-        </div>
+    <div>
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="text-heading-lg font-bold text-warmgray-900">Organizer Requests</h2>
+        <p className="mt-1 text-warmgray-600">
+          Review and manage organizer applications
+          {pendingCount > 0 && (
+            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-coral-100 text-coral-800">
+              {pendingCount} pending
+            </span>
+        )}
+        </p>
+      </div>
 
-        {error && (
+      {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center">
             <AlertCircle className="h-5 w-5 mr-2" />
             {error}
           </div>
         )}
 
-        {/* Filter Tabs */}
+      {/* Filter Tabs */}
         <div className="mb-6 border-b border-warmgray-200">
           <nav className="-mb-px flex space-x-8">
             {(['PENDING', 'ALL', 'APPROVED', 'REJECTED'] as const).map((filter) => (
@@ -173,9 +172,9 @@ export function AdminOrganizerRequests() {
           </nav>
         </div>
 
-        {/* Requests List */}
+      {/* Requests List */}
         <div className="space-y-4">
-          {filteredRequests.length === 0 ? (
+        {filteredRequests.length === 0 ? (
             <div className="card p-12 text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-warmgray-100 mb-4">
                 <Building2 className="h-8 w-8 text-warmgray-400" />
@@ -187,7 +186,7 @@ export function AdminOrganizerRequests() {
                   : 'No requests match the selected filter.'}
               </p>
             </div>
-          ) : (
+        ) : (
             filteredRequests.map((request) => (
               <div 
                 key={request.id} 
@@ -274,7 +273,6 @@ export function AdminOrganizerRequests() {
             ))
           )}
         </div>
-      </div>
 
       {/* Review Modal */}
       {selectedRequest && reviewAction && (

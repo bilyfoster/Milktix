@@ -96,8 +96,10 @@ public class HostController {
         Host host = hostRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Host not found"));
 
-        // Verify ownership
-        if (!host.getUser().getId().equals(userDetails.getId())) {
+        // Verify ownership or admin
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!host.getUser().getId().equals(userDetails.getId()) && !isAdmin) {
             return ResponseEntity.status(403).body("Not authorized to update this host");
         }
 
@@ -110,6 +112,17 @@ public class HostController {
 
         Host updatedHost = hostRepository.save(host);
         return ResponseEntity.ok(mapToDTO(updatedHost));
+    }
+
+    // Delete host profile (admin only)
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteHost(@PathVariable UUID id) {
+        Host host = hostRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Host not found"));
+        
+        hostRepository.delete(host);
+        return ResponseEntity.ok().body("Host deleted successfully");
     }
 
     // Get events by host
@@ -137,6 +150,20 @@ public class HostController {
                 host.getWebsite(),
                 host.getEmail(),
                 host.getPhone()
+        );
+    }
+
+    private HostDTO mapToDTOWithUser(Host host) {
+        return new HostDTO(
+                host.getId(),
+                host.getName(),
+                host.getBio(),
+                host.getImageUrl(),
+                host.getWebsite(),
+                host.getEmail(),
+                host.getPhone(),
+                host.getUser() != null ? host.getUser().getFullName() : null,
+                host.getUser() != null ? host.getUser().getEmail() : null
         );
     }
 }

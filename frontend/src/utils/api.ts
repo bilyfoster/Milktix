@@ -103,6 +103,8 @@ export const hostsApi = {
     website?: string;
     imageUrl?: string;
   }) => api.post('/hosts', data),
+  update: (id: string, data: any) => api.put(`/hosts/${id}`, data),
+  delete: (id: string) => api.delete(`/hosts/${id}`),
 };
 
 // Locations API
@@ -123,6 +125,8 @@ export const locationsApi = {
     phone?: string;
     capacity?: number;
   }) => api.post('/locations', data),
+  update: (id: string, data: any) => api.put(`/locations/${id}`, data),
+  delete: (id: string) => api.delete(`/locations/${id}`),
 };
 
 export default api;

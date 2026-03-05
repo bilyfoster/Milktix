@@ -9,6 +9,9 @@ import { Register } from './pages/Register'
 import { BecomeOrganizer } from './pages/BecomeOrganizer'
 import { OrganizerRequestStatus } from './pages/OrganizerRequestStatus'
 import { AdminOrganizerRequests } from './pages/AdminOrganizerRequests'
+import { AdminHosts } from './pages/AdminHosts'
+import { AdminLocations } from './pages/AdminLocations'
+import { AdminLayout } from './components/AdminLayout'
 import { HostProfile } from './pages/HostProfile'
 import { LocationPage } from './pages/LocationPage'
 import { OrderSuccess } from './pages/OrderSuccess'
@@ -36,7 +39,11 @@ function App() {
         <Route path="register" element={<Register />} />
         <Route path="become-organizer" element={<BecomeOrganizer />} />
         <Route path="organizer-request-status" element={<OrganizerRequestStatus />} />
-        <Route path="admin/organizer-requests" element={<AdminOrganizerRequests />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="organizer-requests" element={<AdminOrganizerRequests />} />
+          <Route path="hosts" element={<AdminHosts />} />
+          <Route path="locations" element={<AdminLocations />} />
+        </Route>
         <Route path="hosts/:id" element={<HostProfile />} />
         <Route path="locations/:id" element={<LocationPage />} />
         <Route path="order-success" element={<OrderSuccess />} />

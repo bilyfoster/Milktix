@@ -6,6 +6,7 @@ import com.milktix.entity.Location;
 import com.milktix.repository.LocationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -55,6 +56,45 @@ public class LocationController {
                 .collect(Collectors.toList()));
     }
 
+    // Update location (admin only)
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateLocation(
+            @PathVariable UUID id,
+            @RequestBody LocationDTO locationDTO) {
+        
+        Location location = locationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Location not found"));
+
+        location.setName(locationDTO.name());
+        location.setDescription(locationDTO.description());
+        location.setAddress(locationDTO.address());
+        location.setCity(locationDTO.city());
+        location.setState(locationDTO.state());
+        location.setZipCode(locationDTO.zipCode());
+        location.setCountry(locationDTO.country());
+        location.setLatitude(locationDTO.latitude());
+        location.setLongitude(locationDTO.longitude());
+        location.setImageUrl(locationDTO.imageUrl());
+        location.setWebsite(locationDTO.website());
+        location.setPhone(locationDTO.phone());
+        location.setCapacity(locationDTO.capacity());
+
+        Location updatedLocation = locationRepository.save(location);
+        return ResponseEntity.ok(mapToDTO(updatedLocation));
+    }
+
+    // Delete location (admin only)
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteLocation(@PathVariable UUID id) {
+        Location location = locationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Location not found"));
+        
+        locationRepository.delete(location);
+        return ResponseEntity.ok().body("Location deleted successfully");
+    }
+
     // Create location
     @PostMapping
     public ResponseEntity<?> createLocation(@RequestBody LocationDTO locationDTO) {
@@ -79,6 +119,7 @@ public class LocationController {
         location.setImageUrl(locationDTO.imageUrl());
         location.setWebsite(locationDTO.website());
         location.setPhone(locationDTO.phone());
+        location.setCapacity(locationDTO.capacity());
 
         Location savedLocation = locationRepository.save(location);
         return ResponseEntity.ok(mapToDTO(savedLocation));
@@ -114,7 +155,8 @@ public class LocationController {
                 location.getLongitude(),
                 location.getImageUrl(),
                 location.getWebsite(),
-                location.getPhone()
+                location.getPhone(),
+                location.getCapacity()
         );
     }
 }

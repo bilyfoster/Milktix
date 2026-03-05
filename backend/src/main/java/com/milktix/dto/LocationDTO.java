@@ -15,5 +15,6 @@ public record LocationDTO(
     Double longitude,
     String imageUrl,
     String website,
-    String phone
+    String phone,
+    Integer capacity
 ) {}

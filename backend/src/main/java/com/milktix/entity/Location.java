@@ -47,6 +47,8 @@ public class Location {
     private String website;
 
     private String phone;
+    
+    private Integer capacity;
 
     @OneToMany(mappedBy = "location", fetch = FetchType.LAZY)
     private Set<Event> events = new HashSet<>();
@@ -106,6 +108,9 @@ public class Location {
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+    
+    public Integer getCapacity() { return capacity; }
+    public void setCapacity(Integer capacity) { this.capacity = capacity; }
 
     public Set<Event> getEvents() { return events; }
     public void setEvents(Set<Event> events) { this.events = events; }
