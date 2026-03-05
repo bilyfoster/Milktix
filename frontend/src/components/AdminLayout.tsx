@@ -1,10 +1,11 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Users, MapPin, Shield, Building2, ChevronLeft, LogOut, Loader2, Ticket } from 'lucide-react'
+import { Users, MapPin, Shield, Building2, ChevronLeft, LogOut, Loader2, Ticket, Calendar } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { useEffect } from 'react'
 import { getVersionString } from '../version'
 
 const adminLinks = [
+  { path: '/admin/events', label: 'Manage Events', icon: Calendar },
   { path: '/admin/organizer-requests', label: 'Organizer Requests', icon: Building2 },
   { path: '/admin/hosts', label: 'Manage Hosts', icon: Users },
   { path: '/admin/locations', label: 'Manage Locations', icon: MapPin },

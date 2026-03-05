@@ -44,4 +44,7 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     // Paginated upcoming events
     Page<Event> findByStatusAndStartDateTimeAfter(
             Event.Status status, LocalDateTime now, Pageable pageable);
+
+    // Find all events ordered by date (for admin)
+    List<Event> findAllByOrderByStartDateTimeDesc();
 }

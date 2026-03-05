@@ -64,6 +64,17 @@ public class EventController {
                 .collect(Collectors.toList()));
     }
 
+    // Get all events (admin only)
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<EventResponse>> getAllEventsAdmin() {
+        List<Event> events = eventRepository.findAllByOrderByStartDateTimeDesc();
+        
+        return ResponseEntity.ok(events.stream()
+                .map(this::mapToEventResponse)
+                .collect(Collectors.toList()));
+    }
+
     // Get event by ID
     @GetMapping("/{id}")
     public ResponseEntity<EventResponse> getEventById(@PathVariable UUID id) {

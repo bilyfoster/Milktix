@@ -11,6 +11,7 @@ import { OrganizerRequestStatus } from './pages/OrganizerRequestStatus'
 import { AdminOrganizerRequests } from './pages/AdminOrganizerRequests'
 import { AdminHosts } from './pages/AdminHosts'
 import { AdminLocations } from './pages/AdminLocations'
+import { AdminEvents } from './pages/AdminEvents'
 import { AdminLayout } from './components/AdminLayout'
 import { HostProfile } from './pages/HostProfile'
 import { LocationPage } from './pages/LocationPage'
@@ -40,6 +41,7 @@ function App() {
         <Route path="become-organizer" element={<BecomeOrganizer />} />
         <Route path="organizer-request-status" element={<OrganizerRequestStatus />} />
         <Route path="/admin" element={<AdminLayout />}>
+          <Route path="events" element={<AdminEvents />} />
           <Route path="organizer-requests" element={<AdminOrganizerRequests />} />
           <Route path="hosts" element={<AdminHosts />} />
           <Route path="locations" element={<AdminLocations />} />
