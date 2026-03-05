@@ -31,6 +31,17 @@ export const authApi = {
   
   register: (username: string, fullName: string, email: string, password: string) =>
     api.post('/auth/register', { username, fullName, email, password }),
+  
+  me: () => api.get('/auth/me'),
+  
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot-password', { email }),
+  
+  validateResetToken: (token: string) =>
+    api.get(`/auth/validate-reset-token?token=${token}`),
+  
+  resetPassword: (token: string, newPassword: string) =>
+    api.post('/auth/reset-password', { token, newPassword }),
 };
 
 // Events API

@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
+import { useAuthStore } from './stores/authStore'
 import { Layout } from './components/Layout'
 import { OrganizerLayout } from './components/OrganizerLayout'
 import { Home } from './pages/Home'
@@ -39,6 +41,12 @@ import { EventTemplates } from './pages/organizer/EventTemplates'
 import { CreateTemplate } from './pages/organizer/CreateTemplate'
 
 function App() {
+  const { checkAuth } = useAuthStore()
+  
+  useEffect(() => {
+    checkAuth()
+  }, [])
+  
   return (
     <Routes>
       {/* Public Layout Routes */}

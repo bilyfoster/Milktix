@@ -12,7 +12,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -89,5 +91,23 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Registration failed: " + e.getMessage());
         }
+    }
+
+    // Get current user (login status check)
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        User user = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        UserDTO userDTO = new UserDTO(
+                user.getId().toString(),
+                user.getUsername(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getRole().toString()
+        );
+        
+        return ResponseEntity.ok(userDTO);
     }
 }
