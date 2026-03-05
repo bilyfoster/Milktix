@@ -1,6 +1,9 @@
 package com.milktix.repository;
 
 import com.milktix.entity.User;
+import com.milktix.entity.UserStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,4 +20,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
+
+    // Pagination and filtering methods
+    Page<User> findByRole(User.Role role, Pageable pageable);
+
+    Page<User> findByStatus(UserStatus status, Pageable pageable);
+
+    Page<User> findByRoleAndStatus(User.Role role, UserStatus status, Pageable pageable);
+
+    Page<User> findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(
+            String email, String fullName, Pageable pageable);
 }

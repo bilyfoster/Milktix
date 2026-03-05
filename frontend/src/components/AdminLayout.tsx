@@ -1,20 +1,23 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Users, MapPin, Shield, Building2, ChevronLeft, LogOut, Loader2, Ticket, Calendar } from 'lucide-react'
+import { Users, MapPin, Shield, Building2, ChevronLeft, LogOut, Loader2, Ticket, Calendar, BarChart3, UserCircle, ChevronDown } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { getVersionString } from '../version'
 
 const adminLinks = [
   { path: '/admin/events', label: 'Manage Events', icon: Calendar },
+  { path: '/admin/users', label: 'Users', icon: Users },
   { path: '/admin/organizer-requests', label: 'Organizer Requests', icon: Building2 },
-  { path: '/admin/hosts', label: 'Manage Hosts', icon: Users },
+  { path: '/admin/hosts', label: 'Manage Hosts', icon: UserCircle },
   { path: '/admin/locations', label: 'Manage Locations', icon: MapPin },
+  { path: '/admin/reports', label: 'Reports', icon: BarChart3 },
 ]
 
 export function AdminLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, isAuthenticated, isLoading, logout } = useAuthStore()
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false)
   
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -38,7 +41,7 @@ export function AdminLayout() {
     return null
   }
   
-  const isActive = (path: string) => location.pathname === path
+  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(`${path}/`)
 
   const handleLogout = () => {
     logout()
@@ -47,9 +50,9 @@ export function AdminLayout() {
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6">
-      {/* Admin Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-4 mb-4">
+      {/* Top Bar with Profile */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
           <Link to="/" className="btn-ghost text-sm">
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to Home
@@ -60,6 +63,68 @@ export function AdminLayout() {
           </div>
         </div>
         
+        {/* User Profile Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+            className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-warmgray-100 transition-colors"
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-white text-sm font-medium">
+              {user?.fullName?.charAt(0).toUpperCase() || 'A'}
+            </div>
+            <div className="hidden sm:block text-left">
+              <p className="text-sm font-medium text-warmgray-900">{user?.fullName}</p>
+              <p className="text-xs text-warmgray-500">{user?.role}</p>
+            </div>
+            <ChevronDown className={`h-4 w-4 text-warmgray-400 transition-transform ${showProfileDropdown ? 'rotate-180' : ''}`} />
+          </button>
+          
+          {showProfileDropdown && (
+            <>
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setShowProfileDropdown(false)}
+              />
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-warmgray-200 py-2 z-50">
+                <div className="px-4 py-3 border-b border-warmgray-100">
+                  <p className="font-medium text-warmgray-900">{user?.fullName}</p>
+                  <p className="text-sm text-warmgray-500">{user?.email}</p>
+                </div>
+                <Link 
+                  to="/profile" 
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-warmgray-700 hover:bg-warmgray-50"
+                  onClick={() => setShowProfileDropdown(false)}
+                >
+                  <UserCircle className="h-4 w-4" />
+                  My Profile
+                </Link>
+                <Link 
+                  to="/organizer/dashboard" 
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-warmgray-700 hover:bg-warmgray-50"
+                  onClick={() => setShowProfileDropdown(false)}
+                >
+                  <Calendar className="h-4 w-4" />
+                  Organizer Dashboard
+                </Link>
+                <div className="border-t border-warmgray-100 my-2" />
+                <button
+                  onClick={() => {
+                    setShowProfileDropdown(false)
+                    handleLogout()
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Admin Header */}
+      <div className="mb-8">
         <div className="card p-6 bg-gradient-to-r from-coral-600 to-coral-500 text-white border-0">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-white/20 rounded-xl">
@@ -67,7 +132,7 @@ export function AdminLayout() {
             </div>
             <div>
               <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-              <p className="text-coral-100">Manage organizer requests, hosts, and venues</p>
+              <p className="text-coral-100">Manage users, events, organizer requests, hosts, and venues</p>
             </div>
           </div>
         </div>

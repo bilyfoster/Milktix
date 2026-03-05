@@ -11,7 +11,8 @@ import { OrganizerRequestStatus } from './pages/OrganizerRequestStatus'
 import { AdminOrganizerRequests } from './pages/AdminOrganizerRequests'
 import { AdminHosts } from './pages/AdminHosts'
 import { AdminLocations } from './pages/AdminLocations'
-import { AdminEvents } from './pages/AdminEvents'
+import { AdminUsers } from './pages/admin/AdminUsers'
+import { AdminEvents as AdminEventsV2 } from './pages/admin/AdminEvents'
 import { AdminLayout } from './components/AdminLayout'
 import { HostProfile } from './pages/HostProfile'
 import { LocationPage } from './pages/LocationPage'
@@ -20,6 +21,7 @@ import { OrderSuccess } from './pages/OrderSuccess'
 // Organizer Dashboard Pages
 import { OrganizerDashboard } from './pages/organizer/Dashboard'
 import { CreateEvent } from './pages/organizer/CreateEvent'
+import { EditEvent } from './pages/organizer/EditEvent'
 import { MyEvents as ManageEvents } from './pages/organizer/MyEvents'
 import { Orders } from './pages/organizer/Orders'
 import { OrderDetail } from './pages/organizer/OrderDetail'
@@ -41,10 +43,12 @@ function App() {
         <Route path="become-organizer" element={<BecomeOrganizer />} />
         <Route path="organizer-request-status" element={<OrganizerRequestStatus />} />
         <Route path="/admin" element={<AdminLayout />}>
-          <Route path="events" element={<AdminEvents />} />
+          <Route path="events" element={<AdminEventsV2 />} />
+          <Route path="users" element={<AdminUsers />} />
           <Route path="organizer-requests" element={<AdminOrganizerRequests />} />
           <Route path="hosts" element={<AdminHosts />} />
           <Route path="locations" element={<AdminLocations />} />
+          <Route path="reports" element={<div className="card p-12 text-center"><h2 className="text-xl font-semibold text-warmgray-900">Reports</h2><p className="text-warmgray-600 mt-2">Reports dashboard coming soon.</p></div>} />
         </Route>
         <Route path="hosts/:id" element={<HostProfile />} />
         <Route path="locations/:id" element={<LocationPage />} />
@@ -55,6 +59,7 @@ function App() {
       <Route path="/organizer" element={<OrganizerLayout />}>
         <Route path="dashboard" element={<OrganizerDashboard />} />
         <Route path="create-event" element={<CreateEvent />} />
+        <Route path="events/:eventId/edit" element={<EditEvent />} />
         <Route path="manage-events" element={<ManageEvents />} />
         <Route path="orders" element={<Orders />} />
         <Route path="orders/:orderId" element={<OrderDetail />} />

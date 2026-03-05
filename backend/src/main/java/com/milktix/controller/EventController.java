@@ -4,6 +4,7 @@ import com.milktix.dto.*;
 import com.milktix.entity.*;
 import com.milktix.repository.*;
 import com.milktix.security.UserDetailsImpl;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -282,5 +283,286 @@ public class EventController {
                 tt.getMaxPerOrder(),
                 tt.isAvailable()
         );
+    }
+
+    // ====================================================================================
+    // ORGANIZER EVENT MANAGEMENT ENDPOINTS (v1.1.0)
+    // ====================================================================================
+
+    /**
+     * PUT /api/organizer/events/{id} - Full event update
+     * Only event organizers or admins can update events
+     */
+    @PutMapping("/organizer/events/{id}")
+    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<EventResponse> updateEvent(
+            @PathVariable UUID id,
+            @Valid @RequestBody EventUpdateRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        
+        // Check authorization: only organizer of the event or admin can update
+        if (!isAuthorizedToModify(event, userDetails)) {
+            throw new RuntimeException("Not authorized to update this event");
+        }
+        
+        // Cannot update cancelled events
+        if (event.getStatus() == Event.Status.CANCELLED) {
+            throw new RuntimeException("Cannot update a cancelled event");
+        }
+        
+        // Update event fields
+        event.setTitle(request.title());
+        event.setDescription(request.description());
+        event.setStartDateTime(request.startDateTime());
+        event.setEndDateTime(request.endDateTime());
+        event.setVenueName(request.venueName());
+        event.setVenueAddress(request.venueAddress());
+        event.setVenueCity(request.venueCity());
+        event.setVenueState(request.venueState());
+        event.setVenueZip(request.venueZip());
+        event.setImageUrl(request.imageUrl());
+        
+        // Update event type if provided
+        if (request.eventType() != null) {
+            try {
+                event.setEventType(Event.EventType.valueOf(request.eventType().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid event type: " + request.eventType());
+            }
+        }
+        
+        // Update host if provided
+        if (request.hostId() != null) {
+            Host host = hostRepository.findById(request.hostId())
+                    .orElseThrow(() -> new RuntimeException("Host not found"));
+            event.setHost(host);
+        } else {
+            event.setHost(null);
+        }
+        
+        // Update location if provided
+        if (request.locationId() != null) {
+            Location location = locationRepository.findById(request.locationId())
+                    .orElseThrow(() -> new RuntimeException("Location not found"));
+            event.setLocation(location);
+        } else {
+            event.setLocation(null);
+        }
+        
+        // Update categories
+        if (request.categoryIds() != null) {
+            event.getCategories().clear();
+            for (UUID categoryId : request.categoryIds()) {
+                categoryRepository.findById(categoryId)
+                        .ifPresent(event.getCategories()::add);
+            }
+        }
+        
+        Event updatedEvent = eventRepository.save(event);
+        
+        return ResponseEntity.ok(mapToEventResponse(updatedEvent));
+    }
+
+    /**
+     * PATCH /api/organizer/events/{id} - Partial update (status, visibility only)
+     * Only event organizers or admins can patch events
+     */
+    @PatchMapping("/organizer/events/{id}")
+    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    public ResponseEntity<EventResponse> patchEvent(
+            @PathVariable UUID id,
+            @RequestBody java.util.Map<String, Object> updates,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        
+        // Check authorization
+        if (!isAuthorizedToModify(event, userDetails)) {
+            throw new RuntimeException("Not authorized to update this event");
+        }
+        
+        // Handle status update
+        if (updates.containsKey("status")) {
+            String statusStr = (String) updates.get("status");
+            try {
+                Event.Status newStatus = Event.Status.valueOf(statusStr.toUpperCase());
+                event.setStatus(newStatus);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid status: " + statusStr);
+            }
+        }
+        
+        // Handle event type (visibility) update
+        if (updates.containsKey("eventType")) {
+            String eventTypeStr = (String) updates.get("eventType");
+            try {
+                Event.EventType newEventType = Event.EventType.valueOf(eventTypeStr.toUpperCase());
+                event.setEventType(newEventType);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid event type: " + eventTypeStr);
+            }
+        }
+        
+        // Handle isPublished (maps to status)
+        if (updates.containsKey("isPublished")) {
+            Boolean isPublished = (Boolean) updates.get("isPublished");
+            if (isPublished) {
+                event.setStatus(Event.Status.PUBLISHED);
+            } else {
+                event.setStatus(Event.Status.DRAFT);
+            }
+        }
+        
+        Event updatedEvent = eventRepository.save(event);
+        
+        return ResponseEntity.ok(mapToEventResponse(updatedEvent));
+    }
+
+    /**
+     * DELETE /api/organizer/events/{id} - Soft delete (mark as CANCELLED)
+     * Only event organizers or admins can delete events
+     */
+    @DeleteMapping("/organizer/events/{id}")
+    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    public ResponseEntity<java.util.Map<String, String>> deleteEvent(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        
+        // Check authorization
+        if (!isAuthorizedToModify(event, userDetails)) {
+            throw new RuntimeException("Not authorized to delete this event");
+        }
+        
+        // Soft delete: mark as CANCELLED
+        event.setStatus(Event.Status.CANCELLED);
+        eventRepository.save(event);
+        
+        return ResponseEntity.ok(java.util.Map.of(
+                "message", "Event cancelled successfully",
+                "eventId", id.toString()
+        ));
+    }
+
+    /**
+     * PUT /api/organizer/events/{id}/ticket-types/{ticketTypeId} - Update ticket type
+     * Validates that quantities sold don't exceed new available quantity
+     */
+    @PutMapping("/organizer/events/{eventId}/ticket-types/{ticketTypeId}")
+    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<TicketTypeResponse> updateTicketType(
+            @PathVariable UUID eventId,
+            @PathVariable UUID ticketTypeId,
+            @Valid @RequestBody TicketTypeUpdateRequest request,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        
+        // Check authorization
+        if (!isAuthorizedToModify(event, userDetails)) {
+            throw new RuntimeException("Not authorized to update this event");
+        }
+        
+        // Cannot update cancelled events
+        if (event.getStatus() == Event.Status.CANCELLED) {
+            throw new RuntimeException("Cannot update ticket types for a cancelled event");
+        }
+        
+        TicketType ticketType = ticketTypeRepository.findById(ticketTypeId)
+                .orElseThrow(() -> new RuntimeException("Ticket type not found"));
+        
+        // Verify ticket type belongs to this event
+        if (!ticketType.getEvent().getId().equals(eventId)) {
+            throw new RuntimeException("Ticket type does not belong to this event");
+        }
+        
+        // Validate: quantities sold don't exceed new available quantity
+        if (request.quantityAvailable() < ticketType.getQuantitySold()) {
+            throw new RuntimeException(
+                    String.format("Cannot reduce available quantity below sold count. Sold: %d, Requested: %d",
+                            ticketType.getQuantitySold(), request.quantityAvailable()));
+        }
+        
+        // Update ticket type fields
+        ticketType.setName(request.name());
+        ticketType.setDescription(request.description());
+        ticketType.setPrice(request.price());
+        ticketType.setQuantityAvailable(request.quantityAvailable());
+        ticketType.setMinPerOrder(request.minPerOrder() != null ? request.minPerOrder() : 1);
+        ticketType.setMaxPerOrder(request.maxPerOrder() != null ? request.maxPerOrder() : 10);
+        ticketType.setSalesStart(request.salesStart());
+        ticketType.setSalesEnd(request.salesEnd());
+        
+        TicketType updatedTicketType = ticketTypeRepository.save(ticketType);
+        
+        return ResponseEntity.ok(mapToTicketTypeResponse(updatedTicketType));
+    }
+
+    /**
+     * DELETE /api/organizer/events/{id}/ticket-types/{ticketTypeId} - Delete ticket type
+     * Only allows deletion if no tickets have been sold for this ticket type
+     */
+    @DeleteMapping("/organizer/events/{eventId}/ticket-types/{ticketTypeId}")
+    @PreAuthorize("hasRole('ORGANIZER') or hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<java.util.Map<String, String>> deleteTicketType(
+            @PathVariable UUID eventId,
+            @PathVariable UUID ticketTypeId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+        
+        // Check authorization
+        if (!isAuthorizedToModify(event, userDetails)) {
+            throw new RuntimeException("Not authorized to modify this event");
+        }
+        
+        TicketType ticketType = ticketTypeRepository.findById(ticketTypeId)
+                .orElseThrow(() -> new RuntimeException("Ticket type not found"));
+        
+        // Verify ticket type belongs to this event
+        if (!ticketType.getEvent().getId().equals(eventId)) {
+            throw new RuntimeException("Ticket type does not belong to this event");
+        }
+        
+        // Validate: cannot delete if tickets have been sold
+        if (ticketType.getQuantitySold() > 0) {
+            throw new RuntimeException(
+                    String.format("Cannot delete ticket type with sold tickets. Sold count: %d",
+                            ticketType.getQuantitySold()));
+        }
+        
+        ticketTypeRepository.delete(ticketType);
+        
+        return ResponseEntity.ok(java.util.Map.of(
+                "message", "Ticket type deleted successfully",
+                "ticketTypeId", ticketTypeId.toString()
+        ));
+    }
+
+    /**
+     * Helper method to check if user is authorized to modify an event
+     * User must be the organizer of the event or an admin
+     */
+    private boolean isAuthorizedToModify(Event event, UserDetailsImpl userDetails) {
+        // Admin can modify any event
+        if (userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return true;
+        }
+        
+        // Organizer can only modify their own events
+        return event.getOrganizer() != null && 
+               event.getOrganizer().getId().equals(userDetails.getId());
     }
 }

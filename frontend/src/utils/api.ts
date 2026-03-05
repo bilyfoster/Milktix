@@ -40,6 +40,13 @@ export const eventsApi = {
   getAllAdmin: () => api.get('/events/all'),
   getById: (id: string) => api.get(`/events/${id}`),
   create: (data: any) => api.post('/events', data),
+  update: (id: string, data: any) => api.put(`/events/${id}`, data),
+  delete: (id: string) => api.delete(`/events/${id}`),
+  duplicateEvent: (id: string) => api.post(`/events/${id}/duplicate`),
+  updateTicketType: (eventId: string, ticketTypeId: string, data: any) => 
+    api.put(`/events/${eventId}/ticket-types/${ticketTypeId}`, data),
+  deleteTicketType: (eventId: string, ticketTypeId: string) => 
+    api.delete(`/events/${eventId}/ticket-types/${ticketTypeId}`),
 };
 
 // Categories API
@@ -128,6 +135,45 @@ export const locationsApi = {
   }) => api.post('/locations', data),
   update: (id: string, data: any) => api.put(`/locations/${id}`, data),
   delete: (id: string) => api.delete(`/locations/${id}`),
+};
+
+// Admin API
+export const adminApi = {
+  // Users
+  getUsers: (params?: { 
+    role?: string; 
+    status?: string; 
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => api.get('/admin/users', { params }),
+  
+  updateUserRole: (userId: string, role: string) => 
+    api.put(`/admin/users/${userId}/role`, { role }),
+  
+  updateUserStatus: (userId: string, status: string) => 
+    api.put(`/admin/users/${userId}/status`, { status }),
+  
+  bulkUpdateUsers: (userIds: string[], action: string) => 
+    api.post('/admin/users/bulk', { userIds, action }),
+  
+  // Events Admin
+  getAdminEvents: (params?: {
+    status?: string;
+    host?: string;
+    location?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => api.get('/admin/events', { params }),
+  
+  bulkUpdateEvents: (eventIds: string[], action: string) => 
+    api.post('/admin/events/bulk', { eventIds, action }),
+  
+  exportEvents: (format: 'csv' | 'json' = 'csv') => 
+    api.get(`/admin/events/export?format=${format}`, { responseType: 'blob' }),
 };
 
 export default api;
